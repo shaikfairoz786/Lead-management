@@ -19,17 +19,6 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         value: '*'
+      # Paste your Neon DB connection string here in the Render dashboard:
       - key: DATABASE_URL
-        fromDatabase:
-          name: automotive-lms-db
-          property: connectionString
-
-# -------------------------------------------------------------
-# Managed PostgreSQL Database
-# -------------------------------------------------------------
-databases:
-  - name: automotive-lms-db
-    region: oregon
-    plan: free
-    databaseName: lead_management
-    user: postgres
+        sync: false
