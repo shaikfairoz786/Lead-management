@@ -175,7 +175,8 @@ export const MatchingOpportunitiesPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredOpportunities.map((opp: any) => {
             const isExpanded = expandedVehicles[opp.vehicleId];
-            const displayMatches = isExpanded ? opp.topMatches : opp.topMatches?.slice(0, 3);
+            const validMatches = (opp.topMatches || []).filter((m: any) => m.score >= 50);
+            const displayMatches = isExpanded ? validMatches : validMatches.slice(0, 3);
 
             return (
               <div

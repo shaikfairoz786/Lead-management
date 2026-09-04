@@ -266,7 +266,7 @@ export class ReportingService {
         matches: {
           where: {
             isIgnored: false,
-            matchScore: { gte: minScore },
+            matchScore: { gte: Math.max(50, minScore) },
             requirement: { status: { notIn: [LeadStatus.WON, LeadStatus.LOST] } },
           },
           include: {

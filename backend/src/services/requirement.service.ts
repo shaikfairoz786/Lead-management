@@ -214,7 +214,7 @@ export class RequirementService {
           select: { id: true, fullName: true, email: true, mobile: true, role: true },
         },
         matches: {
-          where: { isIgnored: false },
+          where: { isIgnored: false, matchScore: { gte: 50 } },
           orderBy: { matchScore: 'desc' },
           include: {
             vehicle: {

@@ -134,12 +134,12 @@ export class VehicleService {
             orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
           },
           matches: {
-            where: { isIgnored: false },
+            where: { isIgnored: false, matchScore: { gte: 50 } },
             select: { id: true, matchScore: true },
           },
           _count: {
             select: {
-              matches: true,
+              matches: { where: { isIgnored: false, matchScore: { gte: 50 } } },
               communications: true,
             },
           },
@@ -166,7 +166,7 @@ export class VehicleService {
           orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
         },
         matches: {
-          where: { isIgnored: false },
+          where: { isIgnored: false, matchScore: { gte: 50 } },
           orderBy: { matchScore: 'desc' },
           include: {
             requirement: {

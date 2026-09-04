@@ -70,7 +70,7 @@ export const InventoryDetailPage: React.FC = () => {
     );
   }
 
-  const matches = vehicle.matches || [];
+  const matches = (vehicle.matches || []).filter((m) => (m.matchScore || 0) >= 50);
   const images = vehicle.images || [];
   const primaryImage =
     images.find((img) => img.isPrimary)?.url ||

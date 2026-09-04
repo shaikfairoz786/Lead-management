@@ -113,7 +113,7 @@ export const RequirementDetailPage: React.FC = () => {
     );
   }
 
-  const matches = requirement.matches || [];
+  const matches = (requirement.matches || []).filter((m) => (m.matchScore || 0) >= 50);
   const activities = requirement.activities || [];
   const followUps = requirement.followUps || [];
   const communications = requirement.communications || [];

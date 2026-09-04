@@ -12,6 +12,7 @@ export class MatchingController {
         where: {
           vehicleId,
           isIgnored: false,
+          matchScore: { gte: 50 },
         },
         orderBy: { matchScore: 'desc' },
         include: {
@@ -42,6 +43,7 @@ export class MatchingController {
         where: {
           requirementId,
           isIgnored: false,
+          matchScore: { gte: 50 },
         },
         orderBy: { matchScore: 'desc' },
         include: {

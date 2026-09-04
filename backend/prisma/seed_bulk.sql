@@ -435,84 +435,92 @@ ON CONFLICT ("id") DO NOTHING;
 INSERT INTO "VehicleMatch" ("id", "requirementId", "vehicleId", "matchScore", "matchReasons", "createdAt", "updatedAt")
 SELECT 
   gen_random_uuid(),
-  r."id",
-  v."id",
-  ROUND(
-    (
-      -- Make match (up to 30 pts)
-      (CASE 
-        WHEN LOWER(v."make") = LOWER(r."brand") THEN 30
-        WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' OR LOWER(r."brand") LIKE '%' || LOWER(v."make") || '%' THEN 25
-        ELSE 0 
-      END) +
-      -- Model match (up to 35 pts)
-      (CASE 
-        WHEN LOWER(v."model") = LOWER(r."model") THEN 35
-        WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' OR LOWER(r."model") LIKE '%' || LOWER(v."model") || '%' THEN 28
-        ELSE 10 
-      END) +
-      -- Budget match (up to 25 pts)
-      (CASE 
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 25
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 20
-        ELSE 5 
-      END) +
-      -- Fuel match (10 pts)
-      (CASE 
-        WHEN v."fuelType" = r."fuelType" THEN 10
-        ELSE 5 
-      END)
-    )::NUMERIC, 
-    0
-  ) AS score,
-  json_build_array(
-    json_build_object(
-      'factor', 'Brand & Make', 
-      'status', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 'MATCH' WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' THEN 'MATCH' ELSE 'MISMATCH' END, 
-      'detail', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 'Make matches preference' WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' THEN 'Make alias matches' ELSE 'Make differs (' || v."make" || ' vs ' || r."brand" || ')' END,
-      'scoreContribution', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 25 ELSE 0 END
-    ),
-    json_build_object(
-      'factor', 'Model', 
-      'status', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 'STRONG_MATCH' WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' THEN 'MATCH' ELSE 'MISMATCH' END, 
-      'detail', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 'Exact model match' WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' THEN 'Model variant matches' ELSE 'Model differs (' || v."model" || ' vs ' || r."model" || ')' END,
-      'scoreContribution', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 25 ELSE 0 END
-    ),
-    json_build_object(
-      'factor', 'Budget Window', 
-      'status', CASE 
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 'STRONG_MATCH' 
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 'PARTIAL' 
-        ELSE 'MISMATCH' 
-      END, 
-      'detail', CASE 
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 'Price is strictly within budget window' 
-        WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 'Price is near budget (within 10% tolerance)' 
-        ELSE 'Price ₹' || ROUND((v."price"/100000.0)::NUMERIC, 1) || 'L is outside requested budget' 
-      END,
-      'scoreContribution', CASE WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 20 WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 16 ELSE 0 END
-    ),
-    json_build_object(
-      'factor', 'Fuel Type', 
-      'status', CASE WHEN v."fuelType" = r."fuelType" THEN 'MATCH' ELSE 'MISMATCH' END, 
-      'detail', CASE WHEN v."fuelType" = r."fuelType" THEN 'Fuel matches (' || v."fuelType" || ')' ELSE 'Fuel differs (' || v."fuelType" || ' vs ' || r."fuelType" || ')' END,
-      'scoreContribution', CASE WHEN v."fuelType" = r."fuelType" THEN 10 ELSE 0 END
-    ),
-    json_build_object(
-      'factor', 'Manufacturing Year', 
-      'status', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 'MATCH' ELSE 'MISMATCH' END, 
-      'detail', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 'Year ' || v."manufacturingYear" || ' meets age criteria' ELSE 'Year ' || v."manufacturingYear" || ' older than requested' END,
-      'scoreContribution', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 10 ELSE 0 END
-    )
-  )::TEXT AS reasons,
+  sub."requirementId",
+  sub."vehicleId",
+  sub.score,
+  sub.reasons,
   NOW(),
   NOW()
-FROM "CustomerRequirement" r
-JOIN "Vehicle" v ON v."category" = r."category" AND v."status" = 'AVAILABLE'
-WHERE (
-    LOWER(v."make") = LOWER(r."brand") 
-    OR LOWER(v."model") = LOWER(r."model")
-    OR (v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.85 AND COALESCE(r."maxBudget", 99999999) * 1.15)
-  )
-  AND r."status" NOT IN ('WON', 'LOST')
+FROM (
+  SELECT 
+    r."id" AS "requirementId",
+    v."id" AS "vehicleId",
+    ROUND(
+      (
+        -- Make match (up to 30 pts)
+        (CASE 
+          WHEN LOWER(v."make") = LOWER(r."brand") THEN 30
+          WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' OR LOWER(r."brand") LIKE '%' || LOWER(v."make") || '%' THEN 25
+          ELSE 0 
+        END) +
+        -- Model match (up to 35 pts)
+        (CASE 
+          WHEN LOWER(v."model") = LOWER(r."model") THEN 35
+          WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' OR LOWER(r."model") LIKE '%' || LOWER(v."model") || '%' THEN 28
+          ELSE 10 
+        END) +
+        -- Budget match (up to 25 pts)
+        (CASE 
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 25
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 20
+          ELSE 5 
+        END) +
+        -- Fuel match (10 pts)
+        (CASE 
+          WHEN v."fuelType" = r."fuelType" THEN 10
+          ELSE 5 
+        END)
+      )::NUMERIC, 
+      0
+    ) AS score,
+    json_build_array(
+      json_build_object(
+        'factor', 'Brand & Make', 
+        'status', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 'MATCH' WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' THEN 'MATCH' ELSE 'MISMATCH' END, 
+        'detail', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 'Make matches preference' WHEN LOWER(v."make") LIKE '%' || LOWER(r."brand") || '%' THEN 'Make alias matches' ELSE 'Make differs (' || v."make" || ' vs ' || r."brand" || ')' END,
+        'scoreContribution', CASE WHEN LOWER(v."make") = LOWER(r."brand") THEN 25 ELSE 0 END
+      ),
+      json_build_object(
+        'factor', 'Model', 
+        'status', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 'STRONG_MATCH' WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' THEN 'MATCH' ELSE 'MISMATCH' END, 
+        'detail', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 'Exact model match' WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' THEN 'Model variant matches' ELSE 'Model differs (' || v."model" || ' vs ' || r."model" || ')' END,
+        'scoreContribution', CASE WHEN LOWER(v."model") = LOWER(r."model") THEN 25 ELSE 0 END
+      ),
+      json_build_object(
+        'factor', 'Budget Window', 
+        'status', CASE 
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 'STRONG_MATCH' 
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 'PARTIAL' 
+          ELSE 'MISMATCH' 
+        END, 
+        'detail', CASE 
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 'Price is strictly within budget window' 
+          WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 'Price is near budget (within 10% tolerance)' 
+          ELSE 'Price ₹' || ROUND((v."price"/100000.0)::NUMERIC, 1) || 'L is outside requested budget' 
+        END,
+        'scoreContribution', CASE WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 20 WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 16 ELSE 0 END
+      ),
+      json_build_object(
+        'factor', 'Fuel Type', 
+        'status', CASE WHEN v."fuelType" = r."fuelType" THEN 'MATCH' ELSE 'MISMATCH' END, 
+        'detail', CASE WHEN v."fuelType" = r."fuelType" THEN 'Fuel matches (' || v."fuelType" || ')' ELSE 'Fuel differs (' || v."fuelType" || ' vs ' || r."fuelType" || ')' END,
+        'scoreContribution', CASE WHEN v."fuelType" = r."fuelType" THEN 10 ELSE 0 END
+      ),
+      json_build_object(
+        'factor', 'Manufacturing Year', 
+        'status', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 'MATCH' ELSE 'MISMATCH' END, 
+        'detail', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 'Year ' || v."manufacturingYear" || ' meets age criteria' ELSE 'Year ' || v."manufacturingYear" || ' older than requested' END,
+        'scoreContribution', CASE WHEN v."manufacturingYear" >= COALESCE(r."minYear", 1990) THEN 10 ELSE 0 END
+      )
+    )::TEXT AS reasons
+  FROM "CustomerRequirement" r
+  JOIN "Vehicle" v ON v."category" = r."category" AND v."status" = 'AVAILABLE'
+  WHERE (
+      LOWER(v."make") = LOWER(r."brand") 
+      OR LOWER(v."model") = LOWER(r."model")
+      OR (v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.85 AND COALESCE(r."maxBudget", 99999999) * 1.15)
+    )
+    AND r."status" NOT IN ('WON', 'LOST')
+) sub
+WHERE sub.score >= 50
 ON CONFLICT ("requirementId", "vehicleId") DO NOTHING;
