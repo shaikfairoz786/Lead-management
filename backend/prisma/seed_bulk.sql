@@ -289,7 +289,7 @@ SELECT
       'detail', CASE 
         WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 'Price is strictly within budget window' 
         WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 'Price is near budget (within 10% tolerance)' 
-        ELSE 'Price ₹' || ROUND(v."price"/100000.0, 1) || 'L is outside requested budget' 
+        ELSE 'Price ₹' || ROUND((v."price"/100000.0)::NUMERIC, 1) || 'L is outside requested budget' 
       END,
       'scoreContribution', CASE WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 20 WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 16 ELSE 0 END
     ),
