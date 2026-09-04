@@ -214,9 +214,9 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                     </div>
 
                     <span
-                      onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=matches`)}
+                      onClick={() => navigate(`/inventory/${opp.vehicleId}`)}
                       className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shrink-0 cursor-pointer transition-colors"
-                      title="View all matching buyer leads for this vehicle"
+                      title="View vehicle details and matching buyers in showroom inventory"
                     >
                       <Sparkles className="w-3 h-3 text-purple-600" />
                       {opp.matchingBuyersCount} {opp.matchingBuyersCount === 1 ? 'Buyer' : 'Buyers'}
@@ -227,9 +227,9 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                   <div className="mt-3.5 space-y-2">
                     <div className="flex items-center justify-between">
                       <span
-                        onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=matches`)}
+                        onClick={() => navigate(`/inventory/${opp.vehicleId}`)}
                         className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-brand-600 cursor-pointer transition-colors"
-                        title="Open matching leads tab"
+                        title="Open vehicle in inventory"
                       >
                         Matching Buyer Leads ({opp.matchingBuyersCount})
                       </span>
@@ -295,9 +295,9 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=specs`)}
+                    onClick={() => navigate(`/inventory/${opp.vehicleId}`)}
                   >
-                    View Vehicle Specs
+                    View Vehicle
                   </Button>
 
                   <Button

@@ -47,8 +47,8 @@ export const InventoryDetailPage: React.FC = () => {
   const { isManager } = useAuth();
 
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'specs' | 'matches' | 'gallery'>(
-    tabParam === 'matches' || tabParam === 'gallery' ? tabParam : 'specs'
+  const [activeTab, setActiveTab] = useState<'matches' | 'gallery'>(
+    tabParam === 'gallery' ? 'gallery' : 'matches'
   );
   const [minScoreFilter, setMinScoreFilter] = useState<number>(50);
   const [buyerSearchTerm, setBuyerSearchTerm] = useState('');
@@ -252,28 +252,7 @@ export const InventoryDetailPage: React.FC = () => {
       {/* Tabs */}
       <div className="border-b border-slate-200 flex items-center gap-5 text-xs font-medium">
         <button
-          onClick={() => {
-            setActiveTab('specs');
-            setSearchParams({ tab: 'specs' });
-          }}
-          className={`pb-2.5 relative transition-colors ${
-            activeTab === 'specs' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-brand-600" />
-            <span>Vehicle Specifications</span>
-          </span>
-          {activeTab === 'specs' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600" />
-          )}
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('matches');
-            setSearchParams({ tab: 'matches' });
-          }}
+          onClick={() => setActiveTab('matches')}
           className={`pb-2.5 relative transition-colors ${
             activeTab === 'matches' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
           }`}
@@ -288,10 +267,7 @@ export const InventoryDetailPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => {
-            setActiveTab('gallery');
-            setSearchParams({ tab: 'gallery' });
-          }}
+          onClick={() => setActiveTab('gallery')}
           className={`pb-2.5 relative transition-colors ${
             activeTab === 'gallery' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
           }`}
@@ -302,142 +278,6 @@ export const InventoryDetailPage: React.FC = () => {
           )}
         </button>
       </div>
-
-      {/* Tab 1: Vehicle Specifications */}
-      {activeTab === 'specs' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Technical Specifications */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                <Car className="w-4 h-4 text-brand-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Technical Specifications
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Make & Model</span>
-                  <span className="font-semibold text-slate-900">{vehicle.make} {vehicle.model}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Variant</span>
-                  <span className="font-semibold text-slate-900">{vehicle.variant || 'Standard'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Manufacturing Year</span>
-                  <span className="font-semibold text-slate-900">{vehicle.manufacturingYear}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Fuel Type</span>
-                  <span className="font-semibold text-slate-900">{vehicle.fuelType}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Transmission</span>
-                  <span className="font-semibold text-slate-900">{vehicle.transmission || 'Manual'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Odometer / KM</span>
-                  <span className="font-semibold text-slate-900">{formatNumber(vehicle.kmDriven)} km</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Body Type</span>
-                  <span className="font-semibold text-slate-900">{vehicle.bodyType || 'Sedan / Hatchback / SUV'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Exterior Color</span>
-                  <span className="font-semibold text-slate-900">{vehicle.color || 'Factory Finish'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Registration & Ownership Details */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                <ShieldCheck className="w-4 h-4 text-brand-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Registration & Ownership
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Registration Number</span>
-                  <span className="font-mono font-semibold text-slate-900 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 inline-block">
-                    {vehicle.registrationNumber || 'Pending / Under Transfer'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Ownership Serial</span>
-                  <span className="font-semibold text-slate-900">{vehicle.numberOfOwners} {vehicle.numberOfOwners === 1 ? 'st' : 'nd'} Owner</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Showroom Location</span>
-                  <span className="font-semibold text-slate-900">{vehicle.location || 'Main Showroom'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Inventory Status</span>
-                  <div className="mt-0.5">
-                    <VehicleStatusBadge status={vehicle.status} />
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Category</span>
-                  <div className="mt-0.5">
-                    <CategoryBadge category={vehicle.category} />
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Showroom Price</span>
-                  <span className="font-bold text-slate-900 font-mono text-sm">{formatLakhs(vehicle.price)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Commercial Specifications (If Commercial) */}
-          {vehicle.category === 'COMMERCIAL' && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                <Layers className="w-4 h-4 text-amber-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Commercial Vehicle Specifications
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Payload Capacity</span>
-                  <span className="font-semibold text-slate-900">{vehicle.payloadCapacityKg ? `${vehicle.payloadCapacityKg.toLocaleString()} KG` : 'Standard Commercial'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Number of Wheels</span>
-                  <span className="font-semibold text-slate-900">{vehicle.numberOfWheels ? `${vehicle.numberOfWheels} Wheeler` : 'Commercial standard'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Axle Configuration</span>
-                  <span className="font-semibold text-slate-900">{vehicle.axleConfiguration || 'Rigid / Multi-Axle'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-medium block">Commercial Body</span>
-                  <span className="font-semibold text-slate-900">{vehicle.bodyType || 'Open / Closed Container'}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Description & Vehicle Condition */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-2">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <FileText className="w-4 h-4 text-slate-600" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Condition Notes & Showroom Description
-              </h3>
-            </div>
-            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {vehicle.description || 'Verified stock condition. Available for showroom test drives and immediate delivery.'}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Tab 2: Matching Leads & Bulk WhatsApp */}
       {activeTab === 'matches' && (
