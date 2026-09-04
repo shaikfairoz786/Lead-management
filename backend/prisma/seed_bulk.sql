@@ -1,27 +1,27 @@
 -- ============================================================================
--- AUTOMOTIVE LMS: BULK DATABASE SEED SQL SCRIPT
--- 1. 53 Real-World Used Vehicles (Toyota, Mahindra, Tata, Hyundai, Maruti, Kia, Ashok Leyland, etc.)
--- 2. 105 Customers with unique contacts
--- 3. 105 Customer Lead Requirements across All Pipeline Stages
--- 4. Initial Match Calculations & Follow-ups
+-- AUTOMOTIVE LMS: DIRECT BULK SEED SCRIPT (NO PL/pgSQL BLOCKS, 100% PURE SQL)
 -- ============================================================================
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- Clean existing operational data to avoid unique constraint collisions
+-- Clean existing operational data
 DELETE FROM "CommunicationLog";
 DELETE FROM "LeadActivity";
 DELETE FROM "FollowUp";
 DELETE FROM "VehicleMatch";
 DELETE FROM "VehicleImage";
-DELETE FROM "Vehicle";
 DELETE FROM "CustomerRequirement";
 DELETE FROM "Customer";
+DELETE FROM "Vehicle";
+DELETE FROM "User";
 
--- ============================================================================
--- 1. INSERT 53 VEHICLES INTO INVENTORY ("Vehicle" & "VehicleImage")
--- ============================================================================
+-- 1. INSERT STAFF USERS
+INSERT INTO "User" ("id", "email", "passwordHash", "fullName", "mobile", "role", "isActive", "createdAt", "updatedAt")
+VALUES
+  ('u0000001-0000-0000-0000-000000000001', 'admin@dealership.com', '$2a$10$Pck78yuUB.dVDJFNrKJ3ceGBQ2sjB/pTMxDYZjY33wlpo8Un7YjiS', 'System Administrator', '9800000001', 'ADMIN', true, NOW(), NOW()),
+  ('u0000001-0000-0000-0000-000000000002', 'manager@dealership.com', '$2a$10$Pck78yuUB.dVDJFNrKJ3ceGBQ2sjB/pTMxDYZjY33wlpo8Un7YjiS', 'Rahul Sharma (Sales Manager)', '9800000002', 'MANAGER', true, NOW(), NOW()),
+  ('u0000001-0000-0000-0000-000000000003', 'salman@dealership.com', '$2a$10$zatB1hVqx9Oo.lv0gmw9wunAggcKx2UVK5qEyc1oUSCNvE41EVpI6', 'Salman (Sales Executive)', '9800000003', 'SALES_EXECUTIVE', true, NOW(), NOW())
+ON CONFLICT ("email") DO NOTHING;
 
+-- 2. INSERT 53 SHOWROOM VEHICLES
 INSERT INTO "Vehicle" (
   "id", "make", "model", "variant", "category", "vehicleType", "manufacturingYear", 
   "registrationYear", "fuelType", "transmission", "kmDriven", "numberOfOwners", 
@@ -97,7 +97,7 @@ INSERT INTO "Vehicle" (
 ('a0000001-0000-0000-0000-000000000053', 'Mahindra', 'Bolero Maxi Truck Plus', 'PS 1.2T Diesel', 'COMMERCIAL', 'Pickup', 2022, 2022, 'DIESEL', 'MANUAL', 51000, 1, 'White', 620000, 'Bangalore - Electronic City', 'Power steering 1.2T pickup truck.', 'AVAILABLE', 'KA-51-AB-1818', 'EXT-MAH-009', 'https://marketplace.autodealer.com/inventory/mahindra-bolero-maxi-truck-2022', 'OPEN_CONTAINER', 1200, 4, 'DIRECT_INVENTORY', NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
 
--- Primary images for vehicles
+-- 3. INSERT VEHICLE IMAGES
 INSERT INTO "VehicleImage" ("id", "vehicleId", "url", "isPrimary", "caption", "sortOrder", "createdAt")
 SELECT 
   gen_random_uuid(),
@@ -110,129 +110,328 @@ SELECT
 FROM "Vehicle" v
 ON CONFLICT ("id") DO NOTHING;
 
+-- 4. INSERT 105 CUSTOMERS
+INSERT INTO "Customer" (
+  "id", "fullName", "primaryMobile", "email", "location", "city", "state", 
+  "preferredContact", "customerType", "source", "createdById", "createdAt", "updatedAt"
+) VALUES 
+('c0000001-0000-0000-0000-000000000001', 'Ramesh Sharma', '9820007919', 'ramesh.sharma1@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '1 days', NOW()),
+('c0000001-0000-0000-0000-000000000002', 'Suresh Reddy', '9820015838', 'suresh.reddy2@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '2 days', NOW()),
+('c0000001-0000-0000-0000-000000000003', 'Kavita Gupta', '9820023757', 'kavita.gupta3@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '3 days', NOW()),
+('c0000001-0000-0000-0000-000000000004', 'Ananya Joshi', '9820031676', 'ananya.joshi4@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '4 days', NOW()),
+('c0000001-0000-0000-0000-000000000005', 'Deepak Bhat', '9820039595', 'deepak.bhat5@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '5 days', NOW()),
+('c0000001-0000-0000-0000-000000000006', 'Vikram Nair', '9820047514', 'vikram.nair6@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '6 days', NOW()),
+('c0000001-0000-0000-0000-000000000007', 'Pooja Malhotra', '9820055433', 'pooja.malhotra7@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '7 days', NOW()),
+('c0000001-0000-0000-0000-000000000008', 'Sunil Pandey', '9820063352', 'sunil.pandey8@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '8 days', NOW()),
+('c0000001-0000-0000-0000-000000000009', 'Manish Dubey', '9820071271', 'manish.dubey9@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '9 days', NOW()),
+('c0000001-0000-0000-0000-000000000010', 'Neha Murthy', '9820079190', 'neha.murthy10@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '10 days', NOW()),
+('c0000001-0000-0000-0000-000000000011', 'Arun Sharma', '9820087109', 'arun.sharma11@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '11 days', NOW()),
+('c0000001-0000-0000-0000-000000000012', 'Sneha Reddy', '9820095028', 'sneha.reddy12@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '12 days', NOW()),
+('c0000001-0000-0000-0000-000000000013', 'Manoj Gupta', '9820102947', 'manoj.gupta13@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '13 days', NOW()),
+('c0000001-0000-0000-0000-000000000014', 'Rohit Joshi', '9820110866', 'rohit.joshi14@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '14 days', NOW()),
+('c0000001-0000-0000-0000-000000000015', 'Ankit Bhat', '9820118785', 'ankit.bhat15@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '15 days', NOW()),
+('c0000001-0000-0000-0000-000000000016', 'Gaurav Nair', '9820126704', 'gaurav.nair16@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '16 days', NOW()),
+('c0000001-0000-0000-0000-000000000017', 'Divya Malhotra', '9820134623', 'divya.malhotra17@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '17 days', NOW()),
+('c0000001-0000-0000-0000-000000000018', 'Sanjay Pandey', '9820142542', 'sanjay.pandey18@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '18 days', NOW()),
+('c0000001-0000-0000-0000-000000000019', 'Alok Dubey', '9820150461', 'alok.dubey19@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '19 days', NOW()),
+('c0000001-0000-0000-0000-000000000020', 'Meera Murthy', '9820158380', 'meera.murthy20@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '20 days', NOW()),
+('c0000001-0000-0000-0000-000000000021', 'Kiran Sharma', '9820166299', 'kiran.sharma21@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '21 days', NOW()),
+('c0000001-0000-0000-0000-000000000022', 'Prashant Reddy', '9820174218', 'prashant.reddy22@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '22 days', NOW()),
+('c0000001-0000-0000-0000-000000000023', 'Swati Gupta', '9820182137', 'swati.gupta23@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '23 days', NOW()),
+('c0000001-0000-0000-0000-000000000024', 'Harish Joshi', '9820190056', 'harish.joshi24@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '24 days', NOW()),
+('c0000001-0000-0000-0000-000000000025', 'Ashok Bhat', '9820197975', 'ashok.bhat25@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '25 days', NOW()),
+('c0000001-0000-0000-0000-000000000026', 'Vinay Nair', '9820205894', 'vinay.nair26@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '26 days', NOW()),
+('c0000001-0000-0000-0000-000000000027', 'Naveen Malhotra', '9820213813', 'naveen.malhotra27@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '27 days', NOW()),
+('c0000001-0000-0000-0000-000000000028', 'Ritu Pandey', '9820221732', 'ritu.pandey28@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '28 days', NOW()),
+('c0000001-0000-0000-0000-000000000029', 'Tarun Dubey', '9820229651', 'tarun.dubey29@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '29 days', NOW()),
+('c0000001-0000-0000-0000-000000000030', 'Siddharth Murthy', '9820237570', 'siddharth.murthy30@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '30 days', NOW()),
+('c0000001-0000-0000-0000-000000000031', 'Chetan Sharma', '9820245489', 'chetan.sharma31@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '31 days', NOW()),
+('c0000001-0000-0000-0000-000000000032', 'Varun Reddy', '9820253408', 'varun.reddy32@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '32 days', NOW()),
+('c0000001-0000-0000-0000-000000000033', 'Shweta Gupta', '9820261327', 'shweta.gupta33@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '33 days', NOW()),
+('c0000001-0000-0000-0000-000000000034', 'Nikhil Joshi', '9820269246', 'nikhil.joshi34@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '34 days', NOW()),
+('c0000001-0000-0000-0000-000000000035', 'Pankaj Bhat', '9820277165', 'pankaj.bhat35@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '35 days', NOW()),
+('c0000001-0000-0000-0000-000000000036', 'Abhishek Nair', '9820285084', 'abhishek.nair36@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '36 days', NOW()),
+('c0000001-0000-0000-0000-000000000037', 'Monika Malhotra', '9820293003', 'monika.malhotra37@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '37 days', NOW()),
+('c0000001-0000-0000-0000-000000000038', 'Lalit Pandey', '9820300922', 'lalit.pandey38@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '38 days', NOW()),
+('c0000001-0000-0000-0000-000000000039', 'Raghav Dubey', '9820308841', 'raghav.dubey39@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '39 days', NOW()),
+('c0000001-0000-0000-0000-000000000040', 'Shruti Murthy', '9820316760', 'shruti.murthy40@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '40 days', NOW()),
+('c0000001-0000-0000-0000-000000000041', 'Ajay Sharma', '9820324679', 'ajay.sharma41@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '41 days', NOW()),
+('c0000001-0000-0000-0000-000000000042', 'Vikas Reddy', '9820332598', 'vikas.reddy42@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '42 days', NOW()),
+('c0000001-0000-0000-0000-000000000043', 'Rashmi Gupta', '9820340517', 'rashmi.gupta43@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '43 days', NOW()),
+('c0000001-0000-0000-0000-000000000044', 'Sachin Joshi', '9820348436', 'sachin.joshi44@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '44 days', NOW()),
+('c0000001-0000-0000-0000-000000000045', 'Karthik Bhat', '9820356355', 'karthik.bhat45@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '45 days', NOW()),
+('c0000001-0000-0000-0000-000000000046', 'Bhavna Nair', '9820364274', 'bhavna.nair46@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '46 days', NOW()),
+('c0000001-0000-0000-0000-000000000047', 'Girish Malhotra', '9820372193', 'girish.malhotra47@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '47 days', NOW()),
+('c0000001-0000-0000-0000-000000000048', 'Kamal Pandey', '9820380112', 'kamal.pandey48@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '48 days', NOW()),
+('c0000001-0000-0000-0000-000000000049', 'Preeti Dubey', '9820388031', 'preeti.dubey49@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '49 days', NOW()),
+('c0000001-0000-0000-0000-000000000050', 'Mahesh Murthy', '9820395950', 'mahesh.murthy50@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '50 days', NOW()),
+('c0000001-0000-0000-0000-000000000051', 'Ramesh Sharma', '9820403869', 'ramesh.sharma51@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '51 days', NOW()),
+('c0000001-0000-0000-0000-000000000052', 'Suresh Reddy', '9820411788', 'suresh.reddy52@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '52 days', NOW()),
+('c0000001-0000-0000-0000-000000000053', 'Kavita Gupta', '9820419707', 'kavita.gupta53@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '53 days', NOW()),
+('c0000001-0000-0000-0000-000000000054', 'Ananya Joshi', '9820427626', 'ananya.joshi54@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '54 days', NOW()),
+('c0000001-0000-0000-0000-000000000055', 'Deepak Bhat', '9820435545', 'deepak.bhat55@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '55 days', NOW()),
+('c0000001-0000-0000-0000-000000000056', 'Vikram Nair', '9820443464', 'vikram.nair56@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '56 days', NOW()),
+('c0000001-0000-0000-0000-000000000057', 'Pooja Malhotra', '9820451383', 'pooja.malhotra57@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '57 days', NOW()),
+('c0000001-0000-0000-0000-000000000058', 'Sunil Pandey', '9820459302', 'sunil.pandey58@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '58 days', NOW()),
+('c0000001-0000-0000-0000-000000000059', 'Manish Dubey', '9820467221', 'manish.dubey59@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '59 days', NOW()),
+('c0000001-0000-0000-0000-000000000060', 'Neha Murthy', '9820475140', 'neha.murthy60@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '60 days', NOW()),
+('c0000001-0000-0000-0000-000000000061', 'Arun Sharma', '9820483059', 'arun.sharma61@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '61 days', NOW()),
+('c0000001-0000-0000-0000-000000000062', 'Sneha Reddy', '9820490978', 'sneha.reddy62@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '62 days', NOW()),
+('c0000001-0000-0000-0000-000000000063', 'Manoj Gupta', '9820498897', 'manoj.gupta63@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '63 days', NOW()),
+('c0000001-0000-0000-0000-000000000064', 'Rohit Joshi', '9820506816', 'rohit.joshi64@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '64 days', NOW()),
+('c0000001-0000-0000-0000-000000000065', 'Ankit Bhat', '9820514735', 'ankit.bhat65@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '65 days', NOW()),
+('c0000001-0000-0000-0000-000000000066', 'Gaurav Nair', '9820522654', 'gaurav.nair66@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '66 days', NOW()),
+('c0000001-0000-0000-0000-000000000067', 'Divya Malhotra', '9820530573', 'divya.malhotra67@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '67 days', NOW()),
+('c0000001-0000-0000-0000-000000000068', 'Sanjay Pandey', '9820538492', 'sanjay.pandey68@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '68 days', NOW()),
+('c0000001-0000-0000-0000-000000000069', 'Alok Dubey', '9820546411', 'alok.dubey69@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '69 days', NOW()),
+('c0000001-0000-0000-0000-000000000070', 'Meera Murthy', '9820554330', 'meera.murthy70@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '70 days', NOW()),
+('c0000001-0000-0000-0000-000000000071', 'Kiran Sharma', '9820562249', 'kiran.sharma71@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '71 days', NOW()),
+('c0000001-0000-0000-0000-000000000072', 'Prashant Reddy', '9820570168', 'prashant.reddy72@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '72 days', NOW()),
+('c0000001-0000-0000-0000-000000000073', 'Swati Gupta', '9820578087', 'swati.gupta73@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '73 days', NOW()),
+('c0000001-0000-0000-0000-000000000074', 'Harish Joshi', '9820586006', 'harish.joshi74@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '74 days', NOW()),
+('c0000001-0000-0000-0000-000000000075', 'Ashok Bhat', '9820593925', 'ashok.bhat75@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '75 days', NOW()),
+('c0000001-0000-0000-0000-000000000076', 'Vinay Nair', '9820601844', 'vinay.nair76@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '76 days', NOW()),
+('c0000001-0000-0000-0000-000000000077', 'Naveen Malhotra', '9820609763', 'naveen.malhotra77@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '77 days', NOW()),
+('c0000001-0000-0000-0000-000000000078', 'Ritu Pandey', '9820617682', 'ritu.pandey78@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '78 days', NOW()),
+('c0000001-0000-0000-0000-000000000079', 'Tarun Dubey', '9820625601', 'tarun.dubey79@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '79 days', NOW()),
+('c0000001-0000-0000-0000-000000000080', 'Siddharth Murthy', '9820633520', 'siddharth.murthy80@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '80 days', NOW()),
+('c0000001-0000-0000-0000-000000000081', 'Chetan Sharma', '9820641439', 'chetan.sharma81@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '81 days', NOW()),
+('c0000001-0000-0000-0000-000000000082', 'Varun Reddy', '9820649358', 'varun.reddy82@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '82 days', NOW()),
+('c0000001-0000-0000-0000-000000000083', 'Shweta Gupta', '9820657277', 'shweta.gupta83@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '83 days', NOW()),
+('c0000001-0000-0000-0000-000000000084', 'Nikhil Joshi', '9820665196', 'nikhil.joshi84@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '84 days', NOW()),
+('c0000001-0000-0000-0000-000000000085', 'Pankaj Bhat', '9820673115', 'pankaj.bhat85@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '85 days', NOW()),
+('c0000001-0000-0000-0000-000000000086', 'Abhishek Nair', '9820681034', 'abhishek.nair86@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '86 days', NOW()),
+('c0000001-0000-0000-0000-000000000087', 'Monika Malhotra', '9820688953', 'monika.malhotra87@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '87 days', NOW()),
+('c0000001-0000-0000-0000-000000000088', 'Lalit Pandey', '9820696872', 'lalit.pandey88@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '88 days', NOW()),
+('c0000001-0000-0000-0000-000000000089', 'Raghav Dubey', '9820704791', 'raghav.dubey89@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '89 days', NOW()),
+('c0000001-0000-0000-0000-000000000090', 'Shruti Murthy', '9820712710', 'shruti.murthy90@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '90 days', NOW()),
+('c0000001-0000-0000-0000-000000000091', 'Ajay Sharma', '9820720629', 'ajay.sharma91@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '91 days', NOW()),
+('c0000001-0000-0000-0000-000000000092', 'Vikas Reddy', '9820728548', 'vikas.reddy92@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '92 days', NOW()),
+('c0000001-0000-0000-0000-000000000093', 'Rashmi Gupta', '9820736467', 'rashmi.gupta93@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '93 days', NOW()),
+('c0000001-0000-0000-0000-000000000094', 'Sachin Joshi', '9820744386', 'sachin.joshi94@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '94 days', NOW()),
+('c0000001-0000-0000-0000-000000000095', 'Karthik Bhat', '9820752305', 'karthik.bhat95@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '95 days', NOW()),
+('c0000001-0000-0000-0000-000000000096', 'Bhavna Nair', '9820760224', 'bhavna.nair96@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '96 days', NOW()),
+('c0000001-0000-0000-0000-000000000097', 'Girish Malhotra', '9820768143', 'girish.malhotra97@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '97 days', NOW()),
+('c0000001-0000-0000-0000-000000000098', 'Kamal Pandey', '9820776062', 'kamal.pandey98@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '98 days', NOW()),
+('c0000001-0000-0000-0000-000000000099', 'Preeti Dubey', '9820783981', 'preeti.dubey99@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '99 days', NOW()),
+('c0000001-0000-0000-0000-000000000100', 'Mahesh Murthy', '9820791900', 'mahesh.murthy100@example.com', 'Hyderabad Central', 'Hyderabad', 'Telangana', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '100 days', NOW()),
+('c0000001-0000-0000-0000-000000000101', 'Ramesh Sharma', '9820799819', 'ramesh.sharma101@example.com', 'Chennai Central', 'Chennai', 'Tamil Nadu', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '101 days', NOW()),
+('c0000001-0000-0000-0000-000000000102', 'Suresh Reddy', '9820807738', 'suresh.reddy102@example.com', 'Pune Central', 'Pune', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '102 days', NOW()),
+('c0000001-0000-0000-0000-000000000103', 'Kavita Gupta', '9820815657', 'kavita.gupta103@example.com', 'Bangalore Central', 'Bangalore', 'Karnataka', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '103 days', NOW()),
+('c0000001-0000-0000-0000-000000000104', 'Ananya Joshi', '9820823576', 'ananya.joshi104@example.com', 'Mumbai Central', 'Mumbai', 'Maharashtra', 'WHATSAPP', 'INDIVIDUAL', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '104 days', NOW()),
+('c0000001-0000-0000-0000-000000000105', 'Deepak Bhat', '9820831495', 'deepak.bhat105@example.com', 'Delhi Central', 'Delhi', 'Delhi', 'WHATSAPP', 'BUSINESS', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', NOW() - INTERVAL '105 days', NOW())
+ON CONFLICT ("primaryMobile") DO NOTHING;
 
--- ============================================================================
--- 2. INSERT 105 CUSTOMERS & REQUIREMENTS WITH REALISTIC STAGES & CRITERIA
--- ============================================================================
+-- 5. INSERT 105 CUSTOMER REQUIREMENTS
+INSERT INTO "CustomerRequirement" (
+  "id", "customerId", "category", "status", "priority", "source", "assignedToId",
+  "brand", "model", "minBudget", "maxBudget", "minYear", "fuelType", "maxKm",
+  "generalNotes", "lostReason", "wonDealAmount", "closedAt", "createdAt", "updatedAt"
+) VALUES
+('r0000001-0000-0000-0000-000000000001', 'c0000001-0000-0000-0000-000000000001', 'PASSENGER', 'NEW', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '1 days', NOW()),
+('r0000001-0000-0000-0000-000000000002', 'c0000001-0000-0000-0000-000000000002', 'PASSENGER', 'CONTACTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '2 days', NOW()),
+('r0000001-0000-0000-0000-000000000003', 'c0000001-0000-0000-0000-000000000003', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '3 days', NOW()),
+('r0000001-0000-0000-0000-000000000004', 'c0000001-0000-0000-0000-000000000004', 'PASSENGER', 'VEHICLE_SEARCHING', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '4 days', NOW()),
+('r0000001-0000-0000-0000-000000000005', 'c0000001-0000-0000-0000-000000000005', 'PASSENGER', 'VEHICLE_MATCHED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '5 days', NOW()),
+('r0000001-0000-0000-0000-000000000006', 'c0000001-0000-0000-0000-000000000006', 'PASSENGER', 'VEHICLE_SHARED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '6 days', NOW()),
+('r0000001-0000-0000-0000-000000000007', 'c0000001-0000-0000-0000-000000000007', 'PASSENGER', 'INTERESTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '7 days', NOW()),
+('r0000001-0000-0000-0000-000000000008', 'c0000001-0000-0000-0000-000000000008', 'COMMERCIAL', 'VISIT_SCHEDULED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '8 days', NOW()),
+('r0000001-0000-0000-0000-000000000009', 'c0000001-0000-0000-0000-000000000009', 'PASSENGER', 'TEST_DRIVE', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '9 days', NOW()),
+('r0000001-0000-0000-0000-000000000010', 'c0000001-0000-0000-0000-000000000010', 'PASSENGER', 'NEGOTIATION', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '10 days', NOW()),
+('r0000001-0000-0000-0000-000000000011', 'c0000001-0000-0000-0000-000000000011', 'PASSENGER', 'BOOKING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '11 days', NOW()),
+('r0000001-0000-0000-0000-000000000012', 'c0000001-0000-0000-0000-000000000012', 'PASSENGER', 'WON', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, 950000, NOW(), NOW() - INTERVAL '12 days', NOW()),
+('r0000001-0000-0000-0000-000000000013', 'c0000001-0000-0000-0000-000000000013', 'PASSENGER', 'LOST', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '13 days', NOW()),
+('r0000001-0000-0000-0000-000000000014', 'c0000001-0000-0000-0000-000000000014', 'PASSENGER', 'NEW', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '14 days', NOW()),
+('r0000001-0000-0000-0000-000000000015', 'c0000001-0000-0000-0000-000000000015', 'COMMERCIAL', 'CONTACTED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '15 days', NOW()),
+('r0000001-0000-0000-0000-000000000016', 'c0000001-0000-0000-0000-000000000016', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '16 days', NOW()),
+('r0000001-0000-0000-0000-000000000017', 'c0000001-0000-0000-0000-000000000017', 'PASSENGER', 'VEHICLE_SEARCHING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '17 days', NOW()),
+('r0000001-0000-0000-0000-000000000018', 'c0000001-0000-0000-0000-000000000018', 'PASSENGER', 'VEHICLE_MATCHED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '18 days', NOW()),
+('r0000001-0000-0000-0000-000000000019', 'c0000001-0000-0000-0000-000000000019', 'PASSENGER', 'VEHICLE_SHARED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '19 days', NOW()),
+('r0000001-0000-0000-0000-000000000020', 'c0000001-0000-0000-0000-000000000020', 'PASSENGER', 'INTERESTED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '20 days', NOW()),
+('r0000001-0000-0000-0000-000000000021', 'c0000001-0000-0000-0000-000000000021', 'PASSENGER', 'VISIT_SCHEDULED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '21 days', NOW()),
+('r0000001-0000-0000-0000-000000000022', 'c0000001-0000-0000-0000-000000000022', 'PASSENGER', 'TEST_DRIVE', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '22 days', NOW()),
+('r0000001-0000-0000-0000-000000000023', 'c0000001-0000-0000-0000-000000000023', 'COMMERCIAL', 'NEGOTIATION', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '23 days', NOW()),
+('r0000001-0000-0000-0000-000000000024', 'c0000001-0000-0000-0000-000000000024', 'PASSENGER', 'BOOKING', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '24 days', NOW()),
+('r0000001-0000-0000-0000-000000000025', 'c0000001-0000-0000-0000-000000000025', 'PASSENGER', 'WON', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, 600000, NOW(), NOW() - INTERVAL '25 days', NOW()),
+('r0000001-0000-0000-0000-000000000026', 'c0000001-0000-0000-0000-000000000026', 'PASSENGER', 'LOST', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '26 days', NOW()),
+('r0000001-0000-0000-0000-000000000027', 'c0000001-0000-0000-0000-000000000027', 'PASSENGER', 'NEW', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '27 days', NOW()),
+('r0000001-0000-0000-0000-000000000028', 'c0000001-0000-0000-0000-000000000028', 'PASSENGER', 'CONTACTED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '28 days', NOW()),
+('r0000001-0000-0000-0000-000000000029', 'c0000001-0000-0000-0000-000000000029', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '29 days', NOW()),
+('r0000001-0000-0000-0000-000000000030', 'c0000001-0000-0000-0000-000000000030', 'COMMERCIAL', 'VEHICLE_SEARCHING', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '30 days', NOW()),
+('r0000001-0000-0000-0000-000000000031', 'c0000001-0000-0000-0000-000000000031', 'PASSENGER', 'VEHICLE_MATCHED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '31 days', NOW()),
+('r0000001-0000-0000-0000-000000000032', 'c0000001-0000-0000-0000-000000000032', 'PASSENGER', 'VEHICLE_SHARED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '32 days', NOW()),
+('r0000001-0000-0000-0000-000000000033', 'c0000001-0000-0000-0000-000000000033', 'PASSENGER', 'INTERESTED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '33 days', NOW()),
+('r0000001-0000-0000-0000-000000000034', 'c0000001-0000-0000-0000-000000000034', 'PASSENGER', 'VISIT_SCHEDULED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '34 days', NOW()),
+('r0000001-0000-0000-0000-000000000035', 'c0000001-0000-0000-0000-000000000035', 'PASSENGER', 'TEST_DRIVE', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '35 days', NOW()),
+('r0000001-0000-0000-0000-000000000036', 'c0000001-0000-0000-0000-000000000036', 'PASSENGER', 'NEGOTIATION', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '36 days', NOW()),
+('r0000001-0000-0000-0000-000000000037', 'c0000001-0000-0000-0000-000000000037', 'PASSENGER', 'BOOKING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '37 days', NOW()),
+('r0000001-0000-0000-0000-000000000038', 'c0000001-0000-0000-0000-000000000038', 'COMMERCIAL', 'WON', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, 400000, NOW(), NOW() - INTERVAL '38 days', NOW()),
+('r0000001-0000-0000-0000-000000000039', 'c0000001-0000-0000-0000-000000000039', 'PASSENGER', 'LOST', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '39 days', NOW()),
+('r0000001-0000-0000-0000-000000000040', 'c0000001-0000-0000-0000-000000000040', 'PASSENGER', 'NEW', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '40 days', NOW()),
+('r0000001-0000-0000-0000-000000000041', 'c0000001-0000-0000-0000-000000000041', 'PASSENGER', 'CONTACTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '41 days', NOW()),
+('r0000001-0000-0000-0000-000000000042', 'c0000001-0000-0000-0000-000000000042', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '42 days', NOW()),
+('r0000001-0000-0000-0000-000000000043', 'c0000001-0000-0000-0000-000000000043', 'PASSENGER', 'VEHICLE_SEARCHING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '43 days', NOW()),
+('r0000001-0000-0000-0000-000000000044', 'c0000001-0000-0000-0000-000000000044', 'PASSENGER', 'VEHICLE_MATCHED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '44 days', NOW()),
+('r0000001-0000-0000-0000-000000000045', 'c0000001-0000-0000-0000-000000000045', 'COMMERCIAL', 'VEHICLE_SHARED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '45 days', NOW()),
+('r0000001-0000-0000-0000-000000000046', 'c0000001-0000-0000-0000-000000000046', 'PASSENGER', 'INTERESTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '46 days', NOW()),
+('r0000001-0000-0000-0000-000000000047', 'c0000001-0000-0000-0000-000000000047', 'PASSENGER', 'VISIT_SCHEDULED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '47 days', NOW()),
+('r0000001-0000-0000-0000-000000000048', 'c0000001-0000-0000-0000-000000000048', 'PASSENGER', 'TEST_DRIVE', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '48 days', NOW()),
+('r0000001-0000-0000-0000-000000000049', 'c0000001-0000-0000-0000-000000000049', 'PASSENGER', 'NEGOTIATION', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '49 days', NOW()),
+('r0000001-0000-0000-0000-000000000050', 'c0000001-0000-0000-0000-000000000050', 'PASSENGER', 'BOOKING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '50 days', NOW()),
+('r0000001-0000-0000-0000-000000000051', 'c0000001-0000-0000-0000-000000000051', 'PASSENGER', 'WON', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, 950000, NOW(), NOW() - INTERVAL '51 days', NOW()),
+('r0000001-0000-0000-0000-000000000052', 'c0000001-0000-0000-0000-000000000052', 'PASSENGER', 'LOST', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '52 days', NOW()),
+('r0000001-0000-0000-0000-000000000053', 'c0000001-0000-0000-0000-000000000053', 'COMMERCIAL', 'NEW', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '53 days', NOW()),
+('r0000001-0000-0000-0000-000000000054', 'c0000001-0000-0000-0000-000000000054', 'PASSENGER', 'CONTACTED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '54 days', NOW()),
+('r0000001-0000-0000-0000-000000000055', 'c0000001-0000-0000-0000-000000000055', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '55 days', NOW()),
+('r0000001-0000-0000-0000-000000000056', 'c0000001-0000-0000-0000-000000000056', 'PASSENGER', 'VEHICLE_SEARCHING', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '56 days', NOW()),
+('r0000001-0000-0000-0000-000000000057', 'c0000001-0000-0000-0000-000000000057', 'PASSENGER', 'VEHICLE_MATCHED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '57 days', NOW()),
+('r0000001-0000-0000-0000-000000000058', 'c0000001-0000-0000-0000-000000000058', 'PASSENGER', 'VEHICLE_SHARED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '58 days', NOW()),
+('r0000001-0000-0000-0000-000000000059', 'c0000001-0000-0000-0000-000000000059', 'PASSENGER', 'INTERESTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '59 days', NOW()),
+('r0000001-0000-0000-0000-000000000060', 'c0000001-0000-0000-0000-000000000060', 'COMMERCIAL', 'VISIT_SCHEDULED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '60 days', NOW()),
+('r0000001-0000-0000-0000-000000000061', 'c0000001-0000-0000-0000-000000000061', 'PASSENGER', 'TEST_DRIVE', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '61 days', NOW()),
+('r0000001-0000-0000-0000-000000000062', 'c0000001-0000-0000-0000-000000000062', 'PASSENGER', 'NEGOTIATION', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '62 days', NOW()),
+('r0000001-0000-0000-0000-000000000063', 'c0000001-0000-0000-0000-000000000063', 'PASSENGER', 'BOOKING', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '63 days', NOW()),
+('r0000001-0000-0000-0000-000000000064', 'c0000001-0000-0000-0000-000000000064', 'PASSENGER', 'WON', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, 1750000, NOW(), NOW() - INTERVAL '64 days', NOW()),
+('r0000001-0000-0000-0000-000000000065', 'c0000001-0000-0000-0000-000000000065', 'PASSENGER', 'LOST', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '65 days', NOW()),
+('r0000001-0000-0000-0000-000000000066', 'c0000001-0000-0000-0000-000000000066', 'PASSENGER', 'NEW', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '66 days', NOW()),
+('r0000001-0000-0000-0000-000000000067', 'c0000001-0000-0000-0000-000000000067', 'PASSENGER', 'CONTACTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '67 days', NOW()),
+('r0000001-0000-0000-0000-000000000068', 'c0000001-0000-0000-0000-000000000068', 'COMMERCIAL', 'REQUIREMENT_CONFIRMED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '68 days', NOW()),
+('r0000001-0000-0000-0000-000000000069', 'c0000001-0000-0000-0000-000000000069', 'PASSENGER', 'VEHICLE_SEARCHING', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '69 days', NOW()),
+('r0000001-0000-0000-0000-000000000070', 'c0000001-0000-0000-0000-000000000070', 'PASSENGER', 'VEHICLE_MATCHED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '70 days', NOW()),
+('r0000001-0000-0000-0000-000000000071', 'c0000001-0000-0000-0000-000000000071', 'PASSENGER', 'VEHICLE_SHARED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '71 days', NOW()),
+('r0000001-0000-0000-0000-000000000072', 'c0000001-0000-0000-0000-000000000072', 'PASSENGER', 'INTERESTED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '72 days', NOW()),
+('r0000001-0000-0000-0000-000000000073', 'c0000001-0000-0000-0000-000000000073', 'PASSENGER', 'VISIT_SCHEDULED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '73 days', NOW()),
+('r0000001-0000-0000-0000-000000000074', 'c0000001-0000-0000-0000-000000000074', 'PASSENGER', 'TEST_DRIVE', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '74 days', NOW()),
+('r0000001-0000-0000-0000-000000000075', 'c0000001-0000-0000-0000-000000000075', 'COMMERCIAL', 'NEGOTIATION', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '75 days', NOW()),
+('r0000001-0000-0000-0000-000000000076', 'c0000001-0000-0000-0000-000000000076', 'PASSENGER', 'BOOKING', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '76 days', NOW()),
+('r0000001-0000-0000-0000-000000000077', 'c0000001-0000-0000-0000-000000000077', 'PASSENGER', 'WON', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, 3050000, NOW(), NOW() - INTERVAL '77 days', NOW()),
+('r0000001-0000-0000-0000-000000000078', 'c0000001-0000-0000-0000-000000000078', 'PASSENGER', 'LOST', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '78 days', NOW()),
+('r0000001-0000-0000-0000-000000000079', 'c0000001-0000-0000-0000-000000000079', 'PASSENGER', 'NEW', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '79 days', NOW()),
+('r0000001-0000-0000-0000-000000000080', 'c0000001-0000-0000-0000-000000000080', 'PASSENGER', 'CONTACTED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '80 days', NOW()),
+('r0000001-0000-0000-0000-000000000081', 'c0000001-0000-0000-0000-000000000081', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '81 days', NOW()),
+('r0000001-0000-0000-0000-000000000082', 'c0000001-0000-0000-0000-000000000082', 'PASSENGER', 'VEHICLE_SEARCHING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '82 days', NOW()),
+('r0000001-0000-0000-0000-000000000083', 'c0000001-0000-0000-0000-000000000083', 'COMMERCIAL', 'VEHICLE_MATCHED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '83 days', NOW()),
+('r0000001-0000-0000-0000-000000000084', 'c0000001-0000-0000-0000-000000000084', 'PASSENGER', 'VEHICLE_SHARED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '84 days', NOW()),
+('r0000001-0000-0000-0000-000000000085', 'c0000001-0000-0000-0000-000000000085', 'PASSENGER', 'INTERESTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '85 days', NOW()),
+('r0000001-0000-0000-0000-000000000086', 'c0000001-0000-0000-0000-000000000086', 'PASSENGER', 'VISIT_SCHEDULED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '86 days', NOW()),
+('r0000001-0000-0000-0000-000000000087', 'c0000001-0000-0000-0000-000000000087', 'PASSENGER', 'TEST_DRIVE', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '87 days', NOW()),
+('r0000001-0000-0000-0000-000000000088', 'c0000001-0000-0000-0000-000000000088', 'PASSENGER', 'NEGOTIATION', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '88 days', NOW()),
+('r0000001-0000-0000-0000-000000000089', 'c0000001-0000-0000-0000-000000000089', 'PASSENGER', 'BOOKING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '89 days', NOW()),
+('r0000001-0000-0000-0000-000000000090', 'c0000001-0000-0000-0000-000000000090', 'COMMERCIAL', 'WON', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, 550000, NOW(), NOW() - INTERVAL '90 days', NOW()),
+('r0000001-0000-0000-0000-000000000091', 'c0000001-0000-0000-0000-000000000091', 'PASSENGER', 'LOST', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Innova Crysta', 1500000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Innova Crysta with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '91 days', NOW()),
+('r0000001-0000-0000-0000-000000000092', 'c0000001-0000-0000-0000-000000000092', 'PASSENGER', 'NEW', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Fortuner', 3000000, 4200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Mahindra Fortuner with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '92 days', NOW()),
+('r0000001-0000-0000-0000-000000000093', 'c0000001-0000-0000-0000-000000000093', 'PASSENGER', 'CONTACTED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Thar', 1200000, 1700000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Tata Thar with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '93 days', NOW()),
+('r0000001-0000-0000-0000-000000000094', 'c0000001-0000-0000-0000-000000000094', 'PASSENGER', 'REQUIREMENT_CONFIRMED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'XUV700', 1700000, 2600000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Hyundai XUV700 with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '94 days', NOW()),
+('r0000001-0000-0000-0000-000000000095', 'c0000001-0000-0000-0000-000000000095', 'PASSENGER', 'VEHICLE_SEARCHING', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Scorpio-N', 1800000, 2500000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Maruti Suzuki Scorpio-N with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '95 days', NOW()),
+('r0000001-0000-0000-0000-000000000096', 'c0000001-0000-0000-0000-000000000096', 'PASSENGER', 'VEHICLE_MATCHED', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'Nexon', 900000, 1450000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Kia Nexon with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '96 days', NOW()),
+('r0000001-0000-0000-0000-000000000097', 'c0000001-0000-0000-0000-000000000097', 'PASSENGER', 'VEHICLE_SHARED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Harrier', 1600000, 2200000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Harrier with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '97 days', NOW()),
+('r0000001-0000-0000-0000-000000000098', 'c0000001-0000-0000-0000-000000000098', 'COMMERCIAL', 'INTERESTED', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Ashok Leyland', 'Ace Gold', 350000, 550000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Ashok Leyland Ace Gold with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '98 days', NOW()),
+('r0000001-0000-0000-0000-000000000099', 'c0000001-0000-0000-0000-000000000099', 'PASSENGER', 'VISIT_SCHEDULED', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Toyota', 'Creta', 1200000, 1850000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Toyota Creta with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '99 days', NOW()),
+('r0000001-0000-0000-0000-000000000100', 'c0000001-0000-0000-0000-000000000100', 'PASSENGER', 'TEST_DRIVE', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Mahindra', 'Swift', 550000, 800000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Mahindra Swift with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '100 days', NOW()),
+('r0000001-0000-0000-0000-000000000101', 'c0000001-0000-0000-0000-000000000101', 'PASSENGER', 'NEGOTIATION', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Tata', 'Brezza', 950000, 1350000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Tata Brezza with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '101 days', NOW()),
+('r0000001-0000-0000-0000-000000000102', 'c0000001-0000-0000-0000-000000000102', 'PASSENGER', 'BOOKING', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Hyundai', 'Ertiga', 900000, 1250000, 2020, 'CNG', 60000, 'Customer looking for clean condition Hyundai Ertiga with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '102 days', NOW()),
+('r0000001-0000-0000-0000-000000000103', 'c0000001-0000-0000-0000-000000000103', 'PASSENGER', 'WON', 'MEDIUM', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Maruti Suzuki', 'Seltos', 1300000, 2000000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Maruti Suzuki Seltos with complete service records.', NULL, 1350000, NOW(), NOW() - INTERVAL '103 days', NOW()),
+('r0000001-0000-0000-0000-000000000104', 'c0000001-0000-0000-0000-000000000104', 'PASSENGER', 'LOST', 'URGENT', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Kia', 'City', 1000000, 1500000, 2020, 'PETROL', 60000, 'Customer looking for clean condition Kia City with complete service records.', 'Price too high', NULL, NOW(), NOW() - INTERVAL '104 days', NOW()),
+('r0000001-0000-0000-0000-000000000105', 'c0000001-0000-0000-0000-000000000105', 'COMMERCIAL', 'NEW', 'HIGH', 'WALK_IN', 'u0000001-0000-0000-0000-000000000003', 'Honda', 'Dost Plus', 500000, 750000, 2020, 'DIESEL', 60000, 'Customer looking for clean condition Honda Dost Plus with complete service records.', NULL, NULL, NULL, NOW() - INTERVAL '105 days', NOW())
+ON CONFLICT ("id") DO NOTHING;
 
-DO $$
-DECLARE
-  v_cust_id UUID;
-  v_req_id UUID;
-  v_staff_id UUID;
-  v_first_names TEXT[] := ARRAY['Ramesh', 'Suresh', 'Kavita', 'Ananya', 'Deepak', 'Vikram', 'Pooja', 'Sunil', 'Manish', 'Neha', 'Arun', 'Sneha', 'Manoj', 'Rohit', 'Ankit', 'Gaurav', 'Divya', 'Sanjay', 'Alok', 'Meera', 'Kiran', 'Prashant', 'Swati', 'Harish', 'Ashok', 'Vinay', 'Naveen', 'Ritu', 'Tarun', 'Siddharth', 'Chetan', 'Varun', 'Shweta', 'Nikhil', 'Pankaj', 'Abhishek', 'Monika', 'Lalit', 'Raghav', 'Shruti', 'Ajay', 'Vikas', 'Rashmi', 'Sachin', 'Karthik', 'Bhavna', 'Girish', 'Kamal', 'Preeti', 'Mahesh'];
-  v_last_names TEXT[] := ARRAY['Sharma', 'Verma', 'Patel', 'Reddy', 'Rao', 'Singh', 'Gupta', 'Iyer', 'Menon', 'Joshi', 'Deshmukh', 'Kulkarni', 'Bhat', 'Shetty', 'Hegde', 'Nair', 'Agarwal', 'Chopra', 'Malhotra', 'Kapoor', 'Yadav', 'Pandey', 'Mishra', 'Choudhary', 'Dubey', 'Gowda', 'Naidu', 'Murthy', 'Pillai', 'Saxena'];
-  v_cities TEXT[] := ARRAY['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune'];
-  v_statuses TEXT[] := ARRAY['NEW', 'CONTACTED', 'REQUIREMENT_CONFIRMED', 'VEHICLE_SEARCHING', 'VEHICLE_MATCHED', 'VEHICLE_SHARED', 'INTERESTED', 'VISIT_SCHEDULED', 'TEST_DRIVE', 'NEGOTIATION', 'BOOKING', 'WON', 'LOST'];
-  
-  v_brands TEXT[] := ARRAY['Toyota', 'Mahindra', 'Tata', 'Hyundai', 'Maruti Suzuki', 'Kia', 'Honda', 'Ashok Leyland'];
-  v_models TEXT[] := ARRAY['Innova Crysta', 'Fortuner', 'Thar', 'XUV700', 'Scorpio-N', 'Nexon', 'Harrier', 'Ace Gold', 'Creta', 'Swift', 'Brezza', 'Ertiga', 'Seltos', 'City', 'Dost Plus'];
-  v_min_budgets INT[] := ARRAY[1500000, 3000000, 1200000, 1700000, 1800000, 900000, 1600000, 350000, 1200000, 550000, 950000, 900000, 1300000, 1000000, 500000];
-  v_max_budgets INT[] := ARRAY[2200000, 4200000, 1700000, 2600000, 2500000, 1450000, 2200000, 550000, 1850000, 800000, 1350000, 1250000, 2000000, 1500000, 750000];
-  v_fuels TEXT[] := ARRAY['DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'DIESEL', 'PETROL', 'PETROL', 'CNG', 'PETROL', 'PETROL', 'DIESEL'];
-  v_cats TEXT[] := ARRAY['PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'COMMERCIAL', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'PASSENGER', 'COMMERCIAL'];
+-- 6. INSERT FOLLOW-UPS
+INSERT INTO "FollowUp" (
+  "id", "requirementId", "assignedToId", "followUpDate", "followUpType", 
+  "status", "notes", "createdAt", "updatedAt"
+) VALUES
+('f0000001-0000-0000-0000-000000000001', 'r0000001-0000-0000-0000-000000000001', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Ramesh Sharma regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000002', 'r0000001-0000-0000-0000-000000000002', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Suresh Reddy regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000003', 'r0000001-0000-0000-0000-000000000003', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'VISIT', 'PENDING', 'Follow-up with Kavita Gupta regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000004', 'r0000001-0000-0000-0000-000000000004', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Ananya Joshi regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000005', 'r0000001-0000-0000-0000-000000000005', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Deepak Bhat regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000006', 'r0000001-0000-0000-0000-000000000006', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'VISIT', 'PENDING', 'Follow-up with Vikram Nair regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000007', 'r0000001-0000-0000-0000-000000000007', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Pooja Malhotra regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000008', 'r0000001-0000-0000-0000-000000000008', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Sunil Pandey regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000009', 'r0000001-0000-0000-0000-000000000009', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'VISIT', 'PENDING', 'Follow-up with Manish Dubey regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000010', 'r0000001-0000-0000-0000-000000000010', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Neha Murthy regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000011', 'r0000001-0000-0000-0000-000000000011', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Arun Sharma regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000014', 'r0000001-0000-0000-0000-000000000014', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Rohit Joshi regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000015', 'r0000001-0000-0000-0000-000000000015', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'VISIT', 'COMPLETED', 'Follow-up with Ankit Bhat regarding Honda Dost Plus requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000016', 'r0000001-0000-0000-0000-000000000016', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Gaurav Nair regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000017', 'r0000001-0000-0000-0000-000000000017', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Divya Malhotra regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000018', 'r0000001-0000-0000-0000-000000000018', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'VISIT', 'PENDING', 'Follow-up with Sanjay Pandey regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000019', 'r0000001-0000-0000-0000-000000000019', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Alok Dubey regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000020', 'r0000001-0000-0000-0000-000000000020', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Meera Murthy regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000021', 'r0000001-0000-0000-0000-000000000021', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'VISIT', 'COMPLETED', 'Follow-up with Kiran Sharma regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000022', 'r0000001-0000-0000-0000-000000000022', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Prashant Reddy regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000023', 'r0000001-0000-0000-0000-000000000023', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Swati Gupta regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000024', 'r0000001-0000-0000-0000-000000000024', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Harish Joshi regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000027', 'r0000001-0000-0000-0000-000000000027', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'VISIT', 'PENDING', 'Follow-up with Naveen Malhotra regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000028', 'r0000001-0000-0000-0000-000000000028', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Ritu Pandey regarding Maruti Suzuki Seltos requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000029', 'r0000001-0000-0000-0000-000000000029', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Tarun Dubey regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000030', 'r0000001-0000-0000-0000-000000000030', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'VISIT', 'PENDING', 'Follow-up with Siddharth Murthy regarding Honda Dost Plus requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000031', 'r0000001-0000-0000-0000-000000000031', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Chetan Sharma regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000032', 'r0000001-0000-0000-0000-000000000032', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Varun Reddy regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000033', 'r0000001-0000-0000-0000-000000000033', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'VISIT', 'PENDING', 'Follow-up with Shweta Gupta regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000034', 'r0000001-0000-0000-0000-000000000034', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Nikhil Joshi regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000035', 'r0000001-0000-0000-0000-000000000035', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Pankaj Bhat regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000036', 'r0000001-0000-0000-0000-000000000036', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'TEST_DRIVE', 'COMPLETED', 'Follow-up with Abhishek Nair regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000037', 'r0000001-0000-0000-0000-000000000037', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Monika Malhotra regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000040', 'r0000001-0000-0000-0000-000000000040', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Shruti Murthy regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000041', 'r0000001-0000-0000-0000-000000000041', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Ajay Sharma regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000042', 'r0000001-0000-0000-0000-000000000042', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'VISIT', 'COMPLETED', 'Follow-up with Vikas Reddy regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000043', 'r0000001-0000-0000-0000-000000000043', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Rashmi Gupta regarding Maruti Suzuki Seltos requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000044', 'r0000001-0000-0000-0000-000000000044', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Sachin Joshi regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000045', 'r0000001-0000-0000-0000-000000000045', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'VISIT', 'PENDING', 'Follow-up with Karthik Bhat regarding Honda Dost Plus requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000046', 'r0000001-0000-0000-0000-000000000046', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Bhavna Nair regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000047', 'r0000001-0000-0000-0000-000000000047', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Girish Malhotra regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000048', 'r0000001-0000-0000-0000-000000000048', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Kamal Pandey regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000049', 'r0000001-0000-0000-0000-000000000049', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Preeti Dubey regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000050', 'r0000001-0000-0000-0000-000000000050', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Mahesh Murthy regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000053', 'r0000001-0000-0000-0000-000000000053', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Kavita Gupta regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000054', 'r0000001-0000-0000-0000-000000000054', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'VISIT', 'PENDING', 'Follow-up with Ananya Joshi regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000055', 'r0000001-0000-0000-0000-000000000055', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Deepak Bhat regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000056', 'r0000001-0000-0000-0000-000000000056', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Vikram Nair regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000057', 'r0000001-0000-0000-0000-000000000057', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'VISIT', 'COMPLETED', 'Follow-up with Pooja Malhotra regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000058', 'r0000001-0000-0000-0000-000000000058', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Sunil Pandey regarding Maruti Suzuki Seltos requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000059', 'r0000001-0000-0000-0000-000000000059', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Manish Dubey regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000060', 'r0000001-0000-0000-0000-000000000060', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Neha Murthy regarding Honda Dost Plus requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000061', 'r0000001-0000-0000-0000-000000000061', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Arun Sharma regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000062', 'r0000001-0000-0000-0000-000000000062', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Sneha Reddy regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000063', 'r0000001-0000-0000-0000-000000000063', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'VISIT', 'COMPLETED', 'Follow-up with Manoj Gupta regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000066', 'r0000001-0000-0000-0000-000000000066', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'VISIT', 'PENDING', 'Follow-up with Gaurav Nair regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000067', 'r0000001-0000-0000-0000-000000000067', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Divya Malhotra regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000068', 'r0000001-0000-0000-0000-000000000068', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Sanjay Pandey regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000069', 'r0000001-0000-0000-0000-000000000069', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'VISIT', 'PENDING', 'Follow-up with Alok Dubey regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000070', 'r0000001-0000-0000-0000-000000000070', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Meera Murthy regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000071', 'r0000001-0000-0000-0000-000000000071', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Kiran Sharma regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000072', 'r0000001-0000-0000-0000-000000000072', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Prashant Reddy regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000073', 'r0000001-0000-0000-0000-000000000073', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Swati Gupta regarding Maruti Suzuki Seltos requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000074', 'r0000001-0000-0000-0000-000000000074', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Harish Joshi regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000075', 'r0000001-0000-0000-0000-000000000075', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'VISIT', 'PENDING', 'Follow-up with Ashok Bhat regarding Honda Dost Plus requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000076', 'r0000001-0000-0000-0000-000000000076', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Vinay Nair regarding Toyota Innova Crysta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000079', 'r0000001-0000-0000-0000-000000000079', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Tarun Dubey regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000080', 'r0000001-0000-0000-0000-000000000080', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Siddharth Murthy regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000081', 'r0000001-0000-0000-0000-000000000081', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'VISIT', 'PENDING', 'Follow-up with Chetan Sharma regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000082', 'r0000001-0000-0000-0000-000000000082', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Varun Reddy regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000083', 'r0000001-0000-0000-0000-000000000083', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Shweta Gupta regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000084', 'r0000001-0000-0000-0000-000000000084', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'TEST_DRIVE', 'COMPLETED', 'Follow-up with Nikhil Joshi regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000085', 'r0000001-0000-0000-0000-000000000085', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'CALL', 'PENDING', 'Follow-up with Pankaj Bhat regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000086', 'r0000001-0000-0000-0000-000000000086', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'CALL', 'PENDING', 'Follow-up with Abhishek Nair regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000087', 'r0000001-0000-0000-0000-000000000087', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'VISIT', 'PENDING', 'Follow-up with Monika Malhotra regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000088', 'r0000001-0000-0000-0000-000000000088', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Lalit Pandey regarding Maruti Suzuki Seltos requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000089', 'r0000001-0000-0000-0000-000000000089', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'CALL', 'PENDING', 'Follow-up with Raghav Dubey regarding Kia City requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000092', 'r0000001-0000-0000-0000-000000000092', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Vikas Reddy regarding Mahindra Fortuner requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000093', 'r0000001-0000-0000-0000-000000000093', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'VISIT', 'PENDING', 'Follow-up with Rashmi Gupta regarding Tata Thar requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000094', 'r0000001-0000-0000-0000-000000000094', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Sachin Joshi regarding Hyundai XUV700 requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000095', 'r0000001-0000-0000-0000-000000000095', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'CALL', 'PENDING', 'Follow-up with Karthik Bhat regarding Maruti Suzuki Scorpio-N requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000096', 'r0000001-0000-0000-0000-000000000096', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '3 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Bhavna Nair regarding Kia Nexon requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000097', 'r0000001-0000-0000-0000-000000000097', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '4 days', 'CALL', 'PENDING', 'Follow-up with Girish Malhotra regarding Honda Harrier requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000098', 'r0000001-0000-0000-0000-000000000098', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'CALL', 'PENDING', 'Follow-up with Kamal Pandey regarding Ashok Leyland Ace Gold requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000099', 'r0000001-0000-0000-0000-000000000099', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-1 days', 'VISIT', 'COMPLETED', 'Follow-up with Preeti Dubey regarding Toyota Creta requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000100', 'r0000001-0000-0000-0000-000000000100', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '0 days', 'TEST_DRIVE', 'PENDING', 'Follow-up with Mahesh Murthy regarding Mahindra Swift requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000101', 'r0000001-0000-0000-0000-000000000101', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '1 days', 'CALL', 'PENDING', 'Follow-up with Ramesh Sharma regarding Tata Brezza requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000102', 'r0000001-0000-0000-0000-000000000102', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '2 days', 'VISIT', 'PENDING', 'Follow-up with Suresh Reddy regarding Hyundai Ertiga requirement.', NOW(), NOW()),
+('f0000001-0000-0000-0000-000000000105', 'r0000001-0000-0000-0000-000000000105', 'u0000001-0000-0000-0000-000000000003', NOW() + INTERVAL '-2 days', 'VISIT', 'COMPLETED', 'Follow-up with Deepak Bhat regarding Honda Dost Plus requirement.', NOW(), NOW())
+ON CONFLICT ("id") DO NOTHING;
 
-  v_fn TEXT;
-  v_ln TEXT;
-  v_full_name TEXT;
-  v_mobile TEXT;
-  v_city TEXT;
-  v_status TEXT;
-  v_idx INT;
-  v_t_idx INT;
-BEGIN
-  -- Assign to staff
-  SELECT "id" INTO v_staff_id FROM "User" WHERE "role" = 'SALES_EXECUTIVE' LIMIT 1;
-  IF v_staff_id IS NULL THEN
-    SELECT "id" INTO v_staff_id FROM "User" LIMIT 1;
-  END IF;
-
-  FOR v_idx IN 1..105 LOOP
-    v_fn := v_first_names[((v_idx - 1) % array_length(v_first_names, 1)) + 1];
-    v_ln := v_last_names[(((v_idx - 1) * 3) % array_length(v_last_names, 1)) + 1];
-    v_full_name := v_fn || ' ' || v_ln;
-    v_mobile := '98' || LPAD(((10000000 + v_idx * 7919) % 89999999 + 10000000)::TEXT, 8, '0');
-    v_city := v_cities[((v_idx - 1) % array_length(v_cities, 1)) + 1];
-    v_status := v_statuses[((v_idx - 1) % array_length(v_statuses, 1)) + 1];
-    v_t_idx := ((v_idx - 1) % array_length(v_models, 1)) + 1;
-
-    v_cust_id := gen_random_uuid();
-    v_req_id := gen_random_uuid();
-
-    -- Insert Customer
-    INSERT INTO "Customer" (
-      "id", "fullName", "primaryMobile", "email", "location", "city", "state", 
-      "preferredContact", "customerType", "source", "createdById", "createdAt", "updatedAt"
-    ) VALUES (
-      v_cust_id,
-      v_full_name,
-      v_mobile,
-      LOWER(v_fn) || '.' || LOWER(v_ln) || v_idx || '@example.com',
-      v_city || ' Central',
-      v_city,
-      CASE WHEN v_city = 'Bangalore' THEN 'Karnataka' WHEN v_city IN ('Mumbai', 'Pune') THEN 'Maharashtra' WHEN v_city = 'Delhi' THEN 'Delhi' WHEN v_city = 'Hyderabad' THEN 'Telangana' ELSE 'Tamil Nadu' END,
-      'WHATSAPP',
-      CASE WHEN v_cats[v_t_idx] = 'COMMERCIAL' THEN 'BUSINESS' ELSE 'INDIVIDUAL' END,
-      'WALK_IN',
-      v_staff_id,
-      NOW() - (v_idx || ' days')::INTERVAL,
-      NOW()
-    ) ON CONFLICT ("primaryMobile") DO NOTHING;
-
-    -- Insert Customer Requirement
-    INSERT INTO "CustomerRequirement" (
-      "id", "customerId", "category", "status", "priority", "source", "assignedToId",
-      "brand", "model", "minBudget", "maxBudget", "minYear", "fuelType", "maxKm",
-      "generalNotes", "lostReason", "wonDealAmount", "closedAt", "createdAt", "updatedAt"
-    ) VALUES (
-      v_req_id,
-      v_cust_id,
-      v_cats[v_t_idx],
-      v_status,
-      CASE WHEN v_idx % 4 = 0 THEN 'URGENT' WHEN v_idx % 3 = 0 THEN 'HIGH' ELSE 'MEDIUM' END,
-      'WALK_IN',
-      v_staff_id,
-      v_brands[v_t_idx],
-      v_models[v_t_idx],
-      v_min_budgets[v_t_idx],
-      v_max_budgets[v_t_idx],
-      2020,
-      v_fuels[v_t_idx],
-      60000,
-      'Customer looking for clean condition ' || v_brands[v_t_idx] || ' ' || v_models[v_t_idx] || ' with complete service records.',
-      CASE WHEN v_status = 'LOST' THEN 'Price too high' ELSE NULL END,
-      CASE WHEN v_status = 'WON' THEN (v_min_budgets[v_t_idx] + 50000) ELSE NULL END,
-      CASE WHEN v_status IN ('WON', 'LOST') THEN NOW() ELSE NULL END,
-      NOW() - (v_idx || ' days')::INTERVAL,
-      NOW()
-    );
-
-    -- Insert Follow-Up for active leads
-    IF v_status NOT IN ('WON', 'LOST') THEN
-      INSERT INTO "FollowUp" (
-        "id", "requirementId", "assignedToId", "followUpDate", "followUpType", 
-        "status", "notes", "createdAt", "updatedAt"
-      ) VALUES (
-        gen_random_uuid(),
-        v_req_id,
-        v_staff_id,
-        NOW() + (((v_idx % 7) - 2) || ' days')::INTERVAL,
-        CASE WHEN v_idx % 4 = 0 THEN 'TEST_DRIVE' WHEN v_idx % 3 = 0 THEN 'VISIT' ELSE 'CALL' END,
-        CASE WHEN (v_idx % 7) < 2 AND v_idx % 3 = 0 THEN 'COMPLETED' ELSE 'PENDING' END,
-        'Follow-up with ' || v_full_name || ' regarding ' || v_brands[v_t_idx] || ' ' || v_models[v_t_idx] || ' requirement.',
-        NOW(),
-        NOW()
-      );
-    END IF;
-
-  END LOOP;
-END $$;
-
-
--- ============================================================================
--- 3. GENERATE EXTENSIVE LIVE MATCHES BETWEEN INVENTORY & BUYER REQUIREMENTS
--- ============================================================================
-
+-- 7. GENERATE MULTI-FACTOR MATCHES
 INSERT INTO "VehicleMatch" ("id", "requirementId", "vehicleId", "matchScore", "matchReasons", "createdAt", "updatedAt")
 SELECT 
   gen_random_uuid(),
@@ -317,4 +516,3 @@ WHERE (
   )
   AND r."status" NOT IN ('WON', 'LOST')
 ON CONFLICT ("requirementId", "vehicleId") DO NOTHING;
-
