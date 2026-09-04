@@ -180,12 +180,12 @@ export class RequirementService {
             },
           },
           matches: {
-            where: { isIgnored: false },
+            where: { isIgnored: false, matchScore: { gte: 50 } },
             select: { id: true, matchScore: true },
           },
           _count: {
             select: {
-              matches: true,
+              matches: { where: { isIgnored: false, matchScore: { gte: 50 } } },
               followUps: true,
               communications: true,
             },

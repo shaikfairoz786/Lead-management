@@ -213,7 +213,11 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                    <span
+                      onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=matches`)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shrink-0 cursor-pointer transition-colors"
+                      title="View all matching buyer leads for this vehicle"
+                    >
                       <Sparkles className="w-3 h-3 text-purple-600" />
                       {opp.matchingBuyersCount} {opp.matchingBuyersCount === 1 ? 'Buyer' : 'Buyers'}
                     </span>
@@ -222,7 +226,11 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                   {/* Matched Buyer Leads */}
                   <div className="mt-3.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <span
+                        onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=matches`)}
+                        className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-brand-600 cursor-pointer transition-colors"
+                        title="Open matching leads tab"
+                      >
                         Matching Buyer Leads ({opp.matchingBuyersCount})
                       </span>
                       {opp.topMatches?.length > 3 && (
@@ -287,7 +295,7 @@ export const MatchingOpportunitiesPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/inventory/${opp.vehicleId}`)}
+                    onClick={() => navigate(`/inventory/${opp.vehicleId}?tab=specs`)}
                   >
                     View Vehicle Specs
                   </Button>

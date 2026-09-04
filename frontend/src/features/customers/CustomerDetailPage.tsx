@@ -65,9 +65,9 @@ export const CustomerDetailPage: React.FC = () => {
   const requirements = customer.requirements || [];
   const communications = customer.communications || [];
 
-  // Flatten all matches across requirements
+  // Flatten all matches across requirements (strictly >= 50% cutoff)
   const allMatches = requirements.flatMap((r) =>
-    (r.matches || []).map((m) => ({ ...m, requirement: r }))
+    (r.matches || []).filter((m) => (m.matchScore || 0) >= 50).map((m) => ({ ...m, requirement: r }))
   );
 
   return (

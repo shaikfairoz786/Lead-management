@@ -457,18 +457,18 @@ FROM (
         (CASE 
           WHEN LOWER(v."model") = LOWER(r."model") THEN 35
           WHEN LOWER(v."model") LIKE '%' || LOWER(r."model") || '%' OR LOWER(r."model") LIKE '%' || LOWER(v."model") || '%' THEN 28
-          ELSE 10 
+          ELSE 0 
         END) +
         -- Budget match (up to 25 pts)
         (CASE 
           WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) AND COALESCE(r."maxBudget", 99999999) THEN 25
           WHEN v."price" BETWEEN COALESCE(r."minBudget", 0) * 0.90 AND COALESCE(r."maxBudget", 99999999) * 1.10 THEN 20
-          ELSE 5 
+          ELSE 0 
         END) +
         -- Fuel match (10 pts)
         (CASE 
           WHEN v."fuelType" = r."fuelType" THEN 10
-          ELSE 5 
+          ELSE 0 
         END)
       )::NUMERIC, 
       0

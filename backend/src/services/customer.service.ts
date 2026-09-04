@@ -178,7 +178,7 @@ export class CustomerService {
               include: { assignedTo: { select: { id: true, fullName: true } } },
             },
             matches: {
-              where: { isIgnored: false },
+              where: { isIgnored: false, matchScore: { gte: 50 } },
               orderBy: { matchScore: 'desc' },
               include: {
                 vehicle: {

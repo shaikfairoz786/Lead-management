@@ -254,14 +254,17 @@ export const InventoryListPage: React.FC = () => {
                       </td>
 
                       <td className="py-2.5 px-4">
-                        {(v.matches?.length || 0) > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                            <Sparkles className="w-3 h-3 text-blue-600" />
-                            {v.matches?.length} leads
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">0 leads</span>
-                        )}
+                        {(() => {
+                          const validLeads = (v.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length;
+                          return validLeads > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                              <Sparkles className="w-3 h-3 text-blue-600" />
+                              {validLeads} leads
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">0 leads</span>
+                          );
+                        })()}
                       </td>
 
                       <td className="py-2.5 px-4 text-right">
@@ -300,22 +303,27 @@ export const InventoryListPage: React.FC = () => {
                     />
                     <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                       <VehicleStatusBadge status={v.status} />
+                      <CategoryBadge category={v.category} />
                     </div>
+                    {v.registrationNumber && (
+                      <span className="absolute bottom-2.5 right-2.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur text-white">
+                        {v.registrationNumber}
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-4 space-y-2">
-                    <div>
-                      <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
-                        <span>{v.manufacturingYear}</span>
-                        <span>•</span>
-                        <span>{v.fuelType}</span>
-                        <span>•</span>
-                        <span>{v.location || 'Showroom'}</span>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors truncate mt-0.5">
-                        {v.make} {v.model} {v.variant || ''}
-                      </h3>
+                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
+                      <span>{v.manufacturingYear}</span>
+                      <span>•</span>
+                      <span>{v.fuelType}</span>
+                      <span>•</span>
+                      <span>{v.transmission || 'Manual'}</span>
                     </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                      {v.make} {v.model} {v.variant || ''}
+                    </h3>
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-base font-bold text-slate-900 font-mono">
@@ -331,7 +339,7 @@ export const InventoryListPage: React.FC = () => {
                 <div className="px-4 py-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-brand-600 font-semibold flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    {v.matches?.length || 0} Matching Buyers
+                    {(v.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length} Matching Buyers
                   </span>
                   <span className="text-slate-400 group-hover:text-brand-600 font-medium transition-colors">
                     Specs & Leads →

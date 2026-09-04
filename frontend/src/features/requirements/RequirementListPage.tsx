@@ -272,14 +272,17 @@ export const RequirementListPage: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4">
-                      {(req.matches?.length || 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          <Sparkles className="w-3 h-3 text-blue-600" />
-                          {req.matches?.length} matches
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">0 matches</span>
-                      )}
+                      {(() => {
+                        const validMatchesCount = (req.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length;
+                        return validMatchesCount > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                            <Sparkles className="w-3 h-3 text-blue-600" />
+                            {validMatchesCount} matches
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">0 matches</span>
+                        );
+                      })()}
                     </td>
 
                     <td className="py-3 px-4 text-slate-600">

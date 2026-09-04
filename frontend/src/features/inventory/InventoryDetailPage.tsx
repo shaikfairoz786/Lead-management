@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Car,
@@ -19,6 +19,13 @@ import {
   CheckSquare,
   Square,
   ChevronRight,
+  Search,
+  Filter,
+  FileText,
+  ShieldCheck,
+  Layers,
+  Settings,
+  Info,
 } from 'lucide-react';
 import api from '../../services/api';
 import { Vehicle, CustomerRequirement } from '../../types';
@@ -36,9 +43,15 @@ import { useAuth } from '../../context/AuthContext';
 export const InventoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isManager } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'matches' | 'gallery'>('matches');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'specs' | 'matches' | 'gallery'>(
+    tabParam === 'matches' || tabParam === 'gallery' ? tabParam : 'specs'
+  );
+  const [minScoreFilter, setMinScoreFilter] = useState<number>(50);
+  const [buyerSearchTerm, setBuyerSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedReqIds, setSelectedReqIds] = useState<string[]>([]);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
@@ -239,13 +252,34 @@ export const InventoryDetailPage: React.FC = () => {
       {/* Tabs */}
       <div className="border-b border-slate-200 flex items-center gap-5 text-xs font-medium">
         <button
-          onClick={() => setActiveTab('matches')}
+          onClick={() => {
+            setActiveTab('specs');
+            setSearchParams({ tab: 'specs' });
+          }}
+          className={`pb-2.5 relative transition-colors ${
+            activeTab === 'specs' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <FileText className="w-3.5 h-3.5 text-brand-600" />
+            <span>Vehicle Specifications</span>
+          </span>
+          {activeTab === 'specs' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600" />
+          )}
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('matches');
+            setSearchParams({ tab: 'matches' });
+          }}
           className={`pb-2.5 relative transition-colors ${
             activeTab === 'matches' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <span className="flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
             <span>Matching Buyer Leads ({matches.length})</span>
           </span>
           {activeTab === 'matches' && (
@@ -254,7 +288,10 @@ export const InventoryDetailPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('gallery')}
+          onClick={() => {
+            setActiveTab('gallery');
+            setSearchParams({ tab: 'gallery' });
+          }}
           className={`pb-2.5 relative transition-colors ${
             activeTab === 'gallery' ? 'text-brand-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
           }`}
@@ -266,13 +303,205 @@ export const InventoryDetailPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Tab 1: Matching Leads & Bulk WhatsApp */}
+      {/* Tab 1: Vehicle Specifications */}
+      {activeTab === 'specs' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Technical Specifications */}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                <Car className="w-4 h-4 text-brand-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Technical Specifications
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Make & Model</span>
+                  <span className="font-semibold text-slate-900">{vehicle.make} {vehicle.model}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Variant</span>
+                  <span className="font-semibold text-slate-900">{vehicle.variant || 'Standard'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Manufacturing Year</span>
+                  <span className="font-semibold text-slate-900">{vehicle.manufacturingYear}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Fuel Type</span>
+                  <span className="font-semibold text-slate-900">{vehicle.fuelType}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Transmission</span>
+                  <span className="font-semibold text-slate-900">{vehicle.transmission || 'Manual'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Odometer / KM</span>
+                  <span className="font-semibold text-slate-900">{formatNumber(vehicle.kmDriven)} km</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Body Type</span>
+                  <span className="font-semibold text-slate-900">{vehicle.bodyType || 'Sedan / Hatchback / SUV'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Exterior Color</span>
+                  <span className="font-semibold text-slate-900">{vehicle.color || 'Factory Finish'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration & Ownership Details */}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                <ShieldCheck className="w-4 h-4 text-brand-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Registration & Ownership
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Registration Number</span>
+                  <span className="font-mono font-semibold text-slate-900 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 inline-block">
+                    {vehicle.registrationNumber || 'Pending / Under Transfer'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Ownership Serial</span>
+                  <span className="font-semibold text-slate-900">{vehicle.numberOfOwners} {vehicle.numberOfOwners === 1 ? 'st' : 'nd'} Owner</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Showroom Location</span>
+                  <span className="font-semibold text-slate-900">{vehicle.location || 'Main Showroom'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Inventory Status</span>
+                  <div className="mt-0.5">
+                    <VehicleStatusBadge status={vehicle.status} />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Category</span>
+                  <div className="mt-0.5">
+                    <CategoryBadge category={vehicle.category} />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Showroom Price</span>
+                  <span className="font-bold text-slate-900 font-mono text-sm">{formatLakhs(vehicle.price)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Commercial Specifications (If Commercial) */}
+          {vehicle.category === 'COMMERCIAL' && (
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                <Layers className="w-4 h-4 text-amber-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Commercial Vehicle Specifications
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Payload Capacity</span>
+                  <span className="font-semibold text-slate-900">{vehicle.payloadCapacityKg ? `${vehicle.payloadCapacityKg.toLocaleString()} KG` : 'Standard Commercial'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Number of Wheels</span>
+                  <span className="font-semibold text-slate-900">{vehicle.numberOfWheels ? `${vehicle.numberOfWheels} Wheeler` : 'Commercial standard'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Axle Configuration</span>
+                  <span className="font-semibold text-slate-900">{vehicle.axleConfiguration || 'Rigid / Multi-Axle'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium block">Commercial Body</span>
+                  <span className="font-semibold text-slate-900">{vehicle.bodyType || 'Open / Closed Container'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Description & Vehicle Condition */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-subtle space-y-2">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <FileText className="w-4 h-4 text-slate-600" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                Condition Notes & Showroom Description
+              </h3>
+            </div>
+            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
+              {vehicle.description || 'Verified stock condition. Available for showroom test drives and immediate delivery.'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Matching Leads & Bulk WhatsApp */}
       {activeTab === 'matches' && (
         <div className="space-y-3">
+          {/* Filters Toolbar */}
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* Threshold Tabs */}
+            <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold w-full sm:w-auto">
+              <button
+                onClick={() => setMinScoreFilter(50)}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-md transition-all ${
+                  minScoreFilter === 50 ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All Matches (50%+)
+              </button>
+              <button
+                onClick={() => setMinScoreFilter(70)}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-md transition-all ${
+                  minScoreFilter === 70 ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Strong Matches (70%+)
+              </button>
+              <button
+                onClick={() => setMinScoreFilter(85)}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-md transition-all ${
+                  minScoreFilter === 85 ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Exact / High (85%+)
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search buyer name or phone..."
+                value={buyerSearchTerm}
+                onChange={(e) => setBuyerSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <span className="text-xs font-semibold uppercase text-slate-700">
-                Prospective Buyers Matching This Inventory Spec
+                Prospective Buyers Matching This Inventory Spec ({
+                  matches.filter((m) => {
+                    const score = m.matchScore || 0;
+                    if (score < minScoreFilter) return false;
+                    if (!buyerSearchTerm.trim()) return true;
+                    const term = buyerSearchTerm.toLowerCase();
+                    const req = m.requirement;
+                    return (
+                      req?.customer?.fullName?.toLowerCase().includes(term) ||
+                      req?.customer?.primaryMobile?.includes(term) ||
+                      `${req?.brand || ''} ${req?.model || ''}`.toLowerCase().includes(term)
+                    );
+                  }).length
+                })
               </span>
             </div>
 
@@ -306,18 +535,42 @@ export const InventoryDetailPage: React.FC = () => {
             )}
           </div>
 
-          {matches.length === 0 ? (
+          {matches.filter((m) => {
+            const score = m.matchScore || 0;
+            if (score < minScoreFilter) return false;
+            if (!buyerSearchTerm.trim()) return true;
+            const term = buyerSearchTerm.toLowerCase();
+            const req = m.requirement;
+            return (
+              req?.customer?.fullName?.toLowerCase().includes(term) ||
+              req?.customer?.primaryMobile?.includes(term) ||
+              `${req?.brand || ''} ${req?.model || ''}`.toLowerCase().includes(term)
+            );
+          }).length === 0 ? (
             <EmptyState
-              title="No matching leads found"
-              description="When leads are created matching this vehicle's price and brand, they will appear here automatically."
+              title="No matching leads for current threshold"
+              description="Adjust the match strength filter to 50%+ or clear search criteria to view matching buyer leads."
             />
           ) : (
             <div className="space-y-2.5">
-              {matches.map((m) => {
-                const req = m.requirement;
-                if (!req) return null;
-                const isSelected = selectedReqIds.includes(m.requirementId);
-                const reasons = m.matchReasons ? JSON.parse(m.matchReasons) : [];
+              {matches
+                .filter((m) => {
+                  const score = m.matchScore || 0;
+                  if (score < minScoreFilter) return false;
+                  if (!buyerSearchTerm.trim()) return true;
+                  const term = buyerSearchTerm.toLowerCase();
+                  const req = m.requirement;
+                  return (
+                    req?.customer?.fullName?.toLowerCase().includes(term) ||
+                    req?.customer?.primaryMobile?.includes(term) ||
+                    `${req?.brand || ''} ${req?.model || ''}`.toLowerCase().includes(term)
+                  );
+                })
+                .map((m) => {
+                  const req = m.requirement;
+                  if (!req) return null;
+                  const isSelected = selectedReqIds.includes(m.requirementId);
+                  const reasons = m.matchReasons ? JSON.parse(m.matchReasons) : [];
 
                 return (
                   <div

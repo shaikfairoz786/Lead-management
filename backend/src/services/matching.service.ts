@@ -34,6 +34,10 @@ export class MatchingEngine {
     let totalWeight = 0;
     let earnedPoints = 0;
 
+    let isBrandMismatch = false;
+    let isModelMismatch = false;
+    let isBudgetMismatch = false;
+
     // --- BRAND / MAKE MATCHING ---
     const brandWeight = weights.BRAND;
     totalWeight += brandWeight;
@@ -44,11 +48,13 @@ export class MatchingEngine {
         earnedPoints += brandWeight;
         reasons.push({ factor: 'Brand & Make', status: 'MATCH', detail: `Make '${vehicle.make}' matches '${requirement.brand}'`, scoreContribution: brandWeight });
       } else {
+        isBrandMismatch = true;
         reasons.push({ factor: 'Brand & Make', status: 'MISMATCH', detail: `Make '${vehicle.make}' does not match '${requirement.brand}'`, scoreContribution: 0 });
       }
     } else {
-      earnedPoints += brandWeight;
-      reasons.push({ factor: 'Brand & Make', status: 'NOT_SPECIFIED', detail: 'Flexible (Any brand accepted)', scoreContribution: brandWeight });
+      const earned = Math.round(brandWeight * 0.5);
+      earnedPoints += earned;
+      reasons.push({ factor: 'Brand & Make', status: 'NOT_SPECIFIED', detail: 'Flexible (Any brand accepted)', scoreContribution: earned });
     }
 
     // --- MODEL MATCHING ---
@@ -61,15 +67,17 @@ export class MatchingEngine {
         earnedPoints += modelWeight;
         reasons.push({ factor: 'Model', status: 'STRONG_MATCH', detail: `Model '${vehicle.model}' is an exact match`, scoreContribution: modelWeight });
       } else if (vehModel.includes(reqModel) || reqModel.includes(vehModel)) {
-        const earned = Math.round(modelWeight * 0.95);
+        const earned = Math.round(modelWeight * 0.90);
         earnedPoints += earned;
         reasons.push({ factor: 'Model', status: 'MATCH', detail: `Model '${vehicle.model}' matches '${requirement.model}'`, scoreContribution: earned });
       } else {
+        isModelMismatch = true;
         reasons.push({ factor: 'Model', status: 'MISMATCH', detail: `Model '${vehicle.model}' does not match '${requirement.model}'`, scoreContribution: 0 });
       }
     } else {
-      earnedPoints += modelWeight;
-      reasons.push({ factor: 'Model', status: 'NOT_SPECIFIED', detail: 'Flexible (Any model accepted)', scoreContribution: modelWeight });
+      const earned = Math.round(modelWeight * 0.5);
+      earnedPoints += earned;
+      reasons.push({ factor: 'Model', status: 'NOT_SPECIFIED', detail: 'Flexible (Any model accepted)', scoreContribution: earned });
     }
 
     // --- BUDGET MATCHING ---
@@ -89,15 +97,17 @@ export class MatchingEngine {
         earnedPoints += budgetWeight;
         reasons.push({ factor: 'Budget Window', status: 'STRONG_MATCH', detail: `Price ₹${(price / 100000).toFixed(2)}L is strictly inside budget window`, scoreContribution: budgetWeight });
       } else if (price >= lowerLimit && price <= upperLimit) {
-        const earned = Math.round(budgetWeight * 0.8);
+        const earned = Math.round(budgetWeight * 0.75);
         earnedPoints += earned;
         reasons.push({ factor: 'Budget Window', status: 'PARTIAL', detail: `Price ₹${(price / 100000).toFixed(2)}L is near budget (±10% tolerance)`, scoreContribution: earned });
       } else {
+        isBudgetMismatch = true;
         reasons.push({ factor: 'Budget Window', status: 'MISMATCH', detail: `Price ₹${(price / 100000).toFixed(2)}L is out of range`, scoreContribution: 0 });
       }
     } else {
-      earnedPoints += budgetWeight;
-      reasons.push({ factor: 'Budget Window', status: 'NOT_SPECIFIED', detail: 'Flexible (Budget not restricted)', scoreContribution: budgetWeight });
+      const earned = Math.round(budgetWeight * 0.5);
+      earnedPoints += earned;
+      reasons.push({ factor: 'Budget Window', status: 'NOT_SPECIFIED', detail: 'Flexible (Budget not restricted)', scoreContribution: earned });
     }
 
     // --- FUEL TYPE MATCHING ---
@@ -113,8 +123,9 @@ export class MatchingEngine {
         reasons.push({ factor: 'Fuel Type', status: 'MISMATCH', detail: `Fuel '${vehicle.fuelType}' differs from '${requirement.fuelType}'`, scoreContribution: 0 });
       }
     } else {
-      earnedPoints += fuelWeight;
-      reasons.push({ factor: 'Fuel Type', status: 'NOT_SPECIFIED', detail: 'Flexible (Any fuel accepted)', scoreContribution: fuelWeight });
+      const earned = Math.round(fuelWeight * 0.5);
+      earnedPoints += earned;
+      reasons.push({ factor: 'Fuel Type', status: 'NOT_SPECIFIED', detail: 'Flexible (Any fuel accepted)', scoreContribution: earned });
     }
 
     // --- YEAR MATCHING ---
@@ -138,8 +149,9 @@ export class MatchingEngine {
         reasons.push({ factor: 'Manufacturing Year', status: 'MISMATCH', detail: `Year ${vehYear} outside target range (${lowerYear}-${upperYear})`, scoreContribution: 0 });
       }
     } else {
-      earnedPoints += yearWeight;
-      reasons.push({ factor: 'Manufacturing Year', status: 'NOT_SPECIFIED', detail: 'Flexible (Year range not specified)', scoreContribution: yearWeight });
+      const earned = Math.round(yearWeight * 0.5);
+      earnedPoints += earned;
+      reasons.push({ factor: 'Manufacturing Year', status: 'NOT_SPECIFIED', detail: 'Flexible (Year range not specified)', scoreContribution: earned });
     }
 
     // --- CATEGORY-SPECIFIC CRITERIA ---
@@ -159,8 +171,9 @@ export class MatchingEngine {
           reasons.push({ factor: 'Transmission', status: 'MISMATCH', detail: `Transmission '${vehicle.transmission || 'N/A'}' differs`, scoreContribution: 0 });
         }
       } else {
-        earnedPoints += halfWeight;
-        reasons.push({ factor: 'Transmission', status: 'NOT_SPECIFIED', detail: 'Flexible (Any transmission)', scoreContribution: halfWeight });
+        const earned = Math.round(halfWeight * 0.5);
+        earnedPoints += earned;
+        reasons.push({ factor: 'Transmission', status: 'NOT_SPECIFIED', detail: 'Flexible (Any transmission)', scoreContribution: earned });
       }
 
       if (requirement.maxKm) {
@@ -175,8 +188,9 @@ export class MatchingEngine {
           reasons.push({ factor: 'Kilometers', status: 'MISMATCH', detail: `${vehicle.kmDriven.toLocaleString()} KM exceeds limit of ${requirement.maxKm.toLocaleString()} KM`, scoreContribution: 0 });
         }
       } else {
-        earnedPoints += halfWeight;
-        reasons.push({ factor: 'Kilometers', status: 'NOT_SPECIFIED', detail: 'Flexible (KM not capped)', scoreContribution: halfWeight });
+        const earned = Math.round(halfWeight * 0.5);
+        earnedPoints += earned;
+        reasons.push({ factor: 'Kilometers', status: 'NOT_SPECIFIED', detail: 'Flexible (KM not capped)', scoreContribution: earned });
       }
     } else {
       // Commercial: Body Type & Payload & Wheels
@@ -193,7 +207,7 @@ export class MatchingEngine {
           reasons.push({ factor: 'Body Type', status: 'MISMATCH', detail: `Body type '${vehicle.bodyType}' differs from '${requirement.bodyType}'`, scoreContribution: 0 });
         }
       } else {
-        const earned = Math.round(bodyPayloadWeight * 0.6);
+        const earned = Math.round(bodyPayloadWeight * 0.5);
         earnedPoints += earned;
         reasons.push({ factor: 'Body Type', status: 'NOT_SPECIFIED', detail: 'Flexible (Body type not restricted)', scoreContribution: earned });
       }
@@ -205,25 +219,34 @@ export class MatchingEngine {
           earnedPoints += earned;
           reasons.push({ factor: 'Payload', status: 'MATCH', detail: `Payload ${vehicle.payloadCapacityKg} kg meets requirement`, scoreContribution: earned });
         } else {
-          const earned = Math.round(bodyPayloadWeight * 0.2);
-          earnedPoints += earned;
-          reasons.push({ factor: 'Payload', status: 'PARTIAL', detail: `Payload ${vehicle.payloadCapacityKg} kg differs from ${requirement.payloadCapacityKg} kg`, scoreContribution: earned });
+          reasons.push({ factor: 'Payload', status: 'MISMATCH', detail: `Payload ${vehicle.payloadCapacityKg} kg differs from ${requirement.payloadCapacityKg} kg`, scoreContribution: 0 });
         }
       } else {
-        const earned = Math.round(bodyPayloadWeight * 0.4);
+        const earned = Math.round(bodyPayloadWeight * 0.5);
         earnedPoints += earned;
         reasons.push({ factor: 'Payload', status: 'NOT_SPECIFIED', detail: 'Flexible (Payload capacity not restricted)', scoreContribution: earned });
       }
 
       const wheelsKmWeight = commWeights.WHEELS_KM;
       totalWeight += wheelsKmWeight;
-      earnedPoints += wheelsKmWeight;
-      reasons.push({ factor: 'Axle / Wheels', status: 'NOT_SPECIFIED', detail: 'Commercial specifications accepted', scoreContribution: wheelsKmWeight });
+      earnedPoints += Math.round(wheelsKmWeight * 0.5);
+      reasons.push({ factor: 'Axle / Wheels', status: 'NOT_SPECIFIED', detail: 'Commercial specifications accepted', scoreContribution: Math.round(wheelsKmWeight * 0.5) });
     }
 
     const calculatedScore = totalWeight > 0 ? Math.round((earnedPoints / totalWeight) * 100) : 0;
-    const finalScore = Math.max(0, Math.min(100, calculatedScore));
-    // Match is eligible if score >= 50%
+    let finalScore = Math.max(0, Math.min(100, calculatedScore));
+
+    // Core compatibility gate:
+    // If multiple primary criteria are completely mismatched, the vehicle cannot be considered a match (< 50%)
+    if (
+      (isModelMismatch && isBudgetMismatch) ||
+      (isBrandMismatch && isBudgetMismatch) ||
+      (isBrandMismatch && isModelMismatch)
+    ) {
+      finalScore = Math.min(finalScore, 40);
+    }
+
+    // Match is strictly eligible ONLY if final score is >= 50%
     const isEligible = finalScore >= 50;
 
     return {
@@ -412,6 +435,13 @@ export class MatchingEngine {
    * Recalculates all matches in batch across entire database.
    */
   static async recalculateAllMatches(): Promise<{ totalMatches: number; processedVehicles: number }> {
+    // Clean up any stale matches under 50% threshold
+    await prisma.vehicleMatch.deleteMany({
+      where: {
+        matchScore: { lt: 50 },
+      },
+    });
+
     const vehicles = await prisma.vehicle.findMany({
       where: { status: 'AVAILABLE' },
     });
