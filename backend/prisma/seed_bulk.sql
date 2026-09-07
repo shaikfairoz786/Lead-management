@@ -16,10 +16,10 @@ DELETE FROM "User";
 -- 1. INSERT STAFF USERS
 INSERT INTO "User" ("id", "email", "passwordHash", "fullName", "mobile", "role", "isActive", "createdAt", "updatedAt")
 VALUES
-  ('u0000001-0000-0000-0000-000000000001', 'admin@dealership.com', '$2a$10$Pck78yuUB.dVDJFNrKJ3ceGBQ2sjB/pTMxDYZjY33wlpo8Un7YjiS', 'System Administrator', '9800000001', 'ADMIN', true, NOW(), NOW()),
-  ('u0000001-0000-0000-0000-000000000002', 'manager@dealership.com', '$2a$10$Pck78yuUB.dVDJFNrKJ3ceGBQ2sjB/pTMxDYZjY33wlpo8Un7YjiS', 'Rahul Sharma (Sales Manager)', '9800000002', 'MANAGER', true, NOW(), NOW()),
-  ('u0000001-0000-0000-0000-000000000003', 'salman@dealership.com', '$2a$10$zatB1hVqx9Oo.lv0gmw9wunAggcKx2UVK5qEyc1oUSCNvE41EVpI6', 'Salman (Sales Executive)', '9800000003', 'SALES_EXECUTIVE', true, NOW(), NOW())
-ON CONFLICT ("email") DO NOTHING;
+  ('u0000001-0000-0000-0000-000000000001', 'admin@dealership.com', '$2a$10$W7MXWQWXKiI9CHJC7ZpGQePnQe3/czM1BfKxKr5BSUvtNSj6Yh5b.', 'System Administrator', '9800000001', 'ADMIN', true, NOW(), NOW()),
+  ('u0000001-0000-0000-0000-000000000002', 'manager@dealership.com', '$2a$10$W7MXWQWXKiI9CHJC7ZpGQePnQe3/czM1BfKxKr5BSUvtNSj6Yh5b.', 'Rahul Sharma (Sales Manager)', '9800000002', 'MANAGER', true, NOW(), NOW()),
+  ('u0000001-0000-0000-0000-000000000003', 'salman@dealership.com', '$2a$10$W7MXWQWXKiI9CHJC7ZpGQePnQe3/czM1BfKxKr5BSUvtNSj6Yh5b.', 'Salman (Sales Executive)', '9800000003', 'SALES_EXECUTIVE', true, NOW(), NOW())
+ON CONFLICT ("email") DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash";
 
 -- 2. INSERT 53 SHOWROOM VEHICLES
 INSERT INTO "Vehicle" (
