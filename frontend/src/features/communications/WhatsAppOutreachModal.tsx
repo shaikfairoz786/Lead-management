@@ -40,7 +40,13 @@ export const WhatsAppOutreachModal: React.FC<WhatsAppOutreachModalProps> = ({
         setPreparedResult(res.data);
       }
     } catch (err: any) {
-      setServerError(err.message || 'Failed to prepare outreach');
+      const detailedError =
+        (Array.isArray(err.errors) && err.errors.length > 0
+          ? err.errors.map((e: any) => `${e.field || e.path?.join('.') || 'Error'}: ${e.message}`).join('; ')
+          : null) ||
+        err.message ||
+        'Failed to prepare outreach';
+      setServerError(detailedError);
     } finally {
       setIsPreparing(false);
     }
