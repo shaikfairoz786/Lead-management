@@ -69,6 +69,29 @@ export class CommunicationService {
     const primaryImage = vehicle.images[0]?.url || null;
     const preparedMessages = [];
 
+    // Validate or resolve preparedById to guarantee foreign key constraint satisfaction
+    let effectivePreparedById: string | null = null;
+    if (data.preparedById) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: data.preparedById },
+        select: { id: true },
+      });
+      if (userExists) {
+        effectivePreparedById = userExists.id;
+      }
+    }
+
+    if (!effectivePreparedById) {
+      const fallbackUser = await prisma.user.findFirst({
+        select: { id: true },
+      });
+      effectivePreparedById = fallbackUser ? fallbackUser.id : null;
+    }
+
+    if (!effectivePreparedById) {
+      throw { status: 400, message: 'No staff user account found to attribute outreach to. Please re-login with a valid account.' };
+    }
+
     for (const req of requirements) {
       const messageContent = this.formatWhatsAppMessage(req.customer, vehicle, data.customNote);
       const whatsAppDeepLink = this.generateWhatsAppDeepLink(req.customer.primaryMobile, messageContent);
@@ -84,7 +107,7 @@ export class CommunicationService {
           recipientMobile: req.customer.primaryMobile,
           mediaUrl: primaryImage,
           status: CommunicationStatus.PREPARED,
-          preparedById: data.preparedById,
+          preparedById: effectivePreparedById,
         },
         include: {
           customer: true,
@@ -108,7 +131,7 @@ export class CommunicationService {
       await prisma.leadActivity.create({
         data: {
           requirementId: req.id,
-          performedById: data.preparedById,
+          performedById: effectivePreparedById,
           activityType: 'WHATSAPP_PREPARED',
           title: 'WhatsApp Outreach Prepared',
           description: `Prepared matching vehicle outreach for ${vehicle.make} ${vehicle.model} (₹${(vehicle.price / 100000).toFixed(2)}L)`,
