@@ -23,12 +23,12 @@ const optionalString = (schema: z.ZodString = z.string()) =>
   }, schema.optional().nullable());
 
 export const createRequirementSchema = z.object({
-  customerId: z.string().uuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Invalid customer ID'),
   category: z.nativeEnum(VehicleCategory).default(VehicleCategory.PASSENGER),
   status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
   priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
   source: z.string().optional().default('WALK_IN'),
-  assignedToId: optionalString(z.string().uuid('Invalid assigned staff ID')),
+  assignedToId: optionalString(z.string().min(1, 'Invalid assigned staff ID')),
 
   // Passenger & General attributes
   brand: optionalString(),
@@ -67,9 +67,9 @@ export const updateStatusSchema = z.object({
   notes: optionalString(),
   lostReason: optionalString(),
   wonDealAmount: optionalNumber(z.number().nonnegative()),
-  vehicleId: optionalString(z.string().uuid('Invalid vehicle ID')),
+  vehicleId: optionalString(z.string().min(1, 'Invalid vehicle ID')),
 });
 
 export const assignRequirementSchema = z.object({
-  assignedToId: z.string().uuid('Invalid staff user ID'),
+  assignedToId: z.string().min(1, 'Invalid staff user ID'),
 });
