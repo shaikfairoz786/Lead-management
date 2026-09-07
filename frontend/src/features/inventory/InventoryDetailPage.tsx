@@ -47,6 +47,7 @@ export const InventoryDetailPage: React.FC = () => {
   const { isManager } = useAuth();
 
   const tabParam = searchParams.get('tab');
+  const justAdded = searchParams.get('justAdded') === 'true';
   const [activeTab, setActiveTab] = useState<'matches' | 'gallery'>(
     tabParam === 'gallery' ? 'gallery' : 'matches'
   );
@@ -179,6 +180,45 @@ export const InventoryDetailPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* High Demand / Instant Stock Match Banner */}
+      {matches.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-brand-500/10 border border-emerald-500/30 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-subtle animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display font-bold text-sm text-slate-900">
+                  {justAdded ? '🎉 Instant Stock Match Detected!' : '⚡ High Buyer Demand Detected'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300/60">
+                  {matches.length} Waiting Buyer{matches.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Prospective customer{matches.length > 1 ? 's have' : ' has'} active requirements matching this vehicle specification. Dispatch WhatsApp proposals immediately!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => {
+                setActiveTab('matches');
+                setSelectedReqIds(matches.map((m) => m.requirementId));
+                setIsWhatsAppModalOpen(true);
+              }}
+              variant="primary"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm w-full sm:w-auto"
+              leftIcon={<Send className="w-3.5 h-3.5" />}
+            >
+              1-Click WhatsApp All ({matches.length})
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Hero Showcase Card */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 p-4 rounded-lg bg-white border border-slate-200 shadow-subtle">

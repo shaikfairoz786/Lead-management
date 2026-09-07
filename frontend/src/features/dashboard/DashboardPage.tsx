@@ -536,7 +536,11 @@ export const DashboardPage: React.FC = () => {
         onSuccess={(vehicle) => {
           setIsAddVehicleModalOpen(false);
           refetchStats();
-          navigate(`/inventory/${vehicle.id}`);
+          if (vehicle?.matchedLeadsCount && vehicle.matchedLeadsCount > 0) {
+            navigate(`/inventory/${vehicle.id}?tab=matches&justAdded=true&matched=${vehicle.matchedLeadsCount}`);
+          } else {
+            navigate(`/inventory/${vehicle.id}`);
+          }
         }}
       />
     </div>

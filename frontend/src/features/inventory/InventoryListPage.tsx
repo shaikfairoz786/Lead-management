@@ -257,9 +257,16 @@ export const InventoryListPage: React.FC = () => {
                         {(() => {
                           const validLeads = (v.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length;
                           return validLeads > 0 ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                              <Sparkles className="w-3 h-3 text-blue-600" />
-                              {validLeads} leads
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/inventory/${v.id}?tab=matches`);
+                              }}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                              title="Click to view matching buyers"
+                            >
+                              <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse" />
+                              {validLeads} Waiting Buyer{validLeads > 1 ? 's' : ''}
                             </span>
                           ) : (
                             <span className="text-slate-400 text-[11px]">0 leads</span>
@@ -337,11 +344,18 @@ export const InventoryListPage: React.FC = () => {
                 </div>
 
                 <div className="px-4 py-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-brand-600 font-semibold flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {(v.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length} Matching Buyers
-                  </span>
-                  <span className="text-slate-400 group-hover:text-brand-600 font-medium transition-colors">
+                  {(() => {
+                    const matchCount = (v.matches || []).filter((m: any) => (m.matchScore || 0) >= 50).length;
+                    return matchCount > 0 ? (
+                      <span className="text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse" />
+                        {matchCount} Waiting Buyer{matchCount > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-medium">0 Waiting Buyers</span>
+                    );
+                  })()}
+                  <span className="text-slate-500 group-hover:text-brand-600 font-medium transition-colors">
                     Specs & Leads →
                   </span>
                 </div>
@@ -407,7 +421,11 @@ export const InventoryListPage: React.FC = () => {
         onSuccess={(veh) => {
           setIsAddModalOpen(false);
           refetch();
-          navigate(`/inventory/${veh.id}`);
+          if (veh?.matchedLeadsCount && veh.matchedLeadsCount > 0) {
+            navigate(`/inventory/${veh.id}?tab=matches&justAdded=true&matched=${veh.matchedLeadsCount}`);
+          } else {
+            navigate(`/inventory/${veh.id}`);
+          }
         }}
       />
     </div>

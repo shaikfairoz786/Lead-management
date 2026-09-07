@@ -55,11 +55,17 @@ export class VehicleService {
     });
 
     // Auto-trigger matching against all active customer requirements!
-    MatchingEngine.matchVehicleAgainstRequirements(vehicle.id).catch((err) => {
+    let matchedLeadsCount = 0;
+    try {
+      matchedLeadsCount = await MatchingEngine.matchVehicleAgainstRequirements(vehicle.id);
+    } catch (err) {
       console.error('Error auto-matching newly added vehicle:', err);
-    });
+    }
 
-    return vehicle;
+    return {
+      ...vehicle,
+      matchedLeadsCount,
+    };
   }
 
   static async listVehicles(params: {

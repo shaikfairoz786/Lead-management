@@ -334,6 +334,18 @@ export class MatchingEngine {
                 }),
               },
             });
+
+            // Trigger In-App Notification if requirement has assigned staff
+            if (req.assignedToId) {
+              await prisma.notification.create({
+                data: {
+                  userId: req.assignedToId,
+                  title: '⚡ High Stock Match Alert',
+                  message: `New inventory ${vehicle.make} ${vehicle.model} (${evaluation.score}% match) is ready for ${req.customer?.fullName || 'lead'}!`,
+                  link: `/inventory/${vehicle.id}?tab=matches`,
+                },
+              }).catch(() => {});
+            }
           }
 
           matchCount++;
