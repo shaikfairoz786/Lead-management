@@ -62,15 +62,23 @@ export const Sidebar: React.FC<{
         {/* Brand Header */}
         <div className="flex h-14 items-center justify-between px-4 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
-              <Car className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-brand-500/20 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <svg className="w-4 h-4 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                <circle cx="7" cy="17" r="2" />
+                <path d="M9 17h6" />
+                <circle cx="17" cy="17" r="2" />
+                <path d="m13 6 3-3h3" />
+              </svg>
             </div>
             <div>
-              <span className="font-bold text-sm tracking-tight text-slate-900">
-                Auto<span className="text-brand-600">CRM</span>
+              <span className="font-display font-bold text-sm tracking-tight text-slate-900 flex items-center gap-1">
+                Drive<span className="text-brand-600 font-extrabold">Pulse</span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-brand-50 text-brand-700 font-bold border border-brand-200">OS</span>
               </span>
-              <span className="block text-[10px] text-slate-400 font-medium -mt-0.5">
-                Dealer Management
+              <span className="block text-[10px] text-slate-500 font-medium -mt-0.5 tracking-wide">
+                Automotive Sales Cloud
               </span>
             </div>
           </div>

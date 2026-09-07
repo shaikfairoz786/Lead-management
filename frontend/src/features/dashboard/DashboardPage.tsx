@@ -96,7 +96,7 @@ export const DashboardPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Automotive Dealership Lead Management & Stock Match Dashboard
+            Automotive Sales Cloud & Dealership Intelligence Dashboard
           </p>
         </div>
 

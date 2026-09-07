@@ -45,15 +45,21 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-base shadow-subtle">
-            <Car className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white flex items-center justify-center font-bold text-base shadow-md ring-2 ring-brand-500/20">
+            <svg className="w-6 h-6 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+              <circle cx="7" cy="17" r="2" />
+              <path d="M9 17h6" />
+              <circle cx="17" cy="17" r="2" />
+              <path d="m13 6 3-3h3" />
+            </svg>
           </div>
         </div>
         <h2 className="mt-3 text-center text-xl font-bold tracking-tight text-slate-900">
-          Auto<span className="text-brand-600">LMS</span> Enterprise
+          Drive<span className="text-brand-600">Pulse</span> Enterprise
         </h2>
         <p className="text-center text-xs text-slate-500 mt-0.5">
-          Automotive Dealership & Commercial Fleet Lead Management
+          Automotive Sales Cloud & Dealership Intelligence
         </p>
       </div>
 
