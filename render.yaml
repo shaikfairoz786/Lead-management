@@ -3,13 +3,14 @@ services:
   # Backend Web Service (Node.js + Express + Prisma)
   # -------------------------------------------------------------
   - type: web
-    name: automotive-lms-backend
+    name: drivepulse-backend
     env: node
     region: oregon
     plan: free
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma db push && node dist/src/server.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,6 +20,6 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         value: '*'
-      # Paste your Neon DB connection string here in the Render dashboard:
+      # Paste your Neon DB connection string in the Render dashboard:
       - key: DATABASE_URL
         sync: false
