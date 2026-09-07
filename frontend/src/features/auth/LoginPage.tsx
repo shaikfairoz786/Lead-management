@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, Shield, User, Briefcase, MapPin, AlertCircle, ArrowRight } from 'lucide-react';
+import { ShieldCheck, AlertCircle, ArrowRight, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 
 export const LoginPage: React.FC = () => {
-  const { login, quickLoginAs } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [identifier, setIdentifier] = useState('sales1@autolms.com');
+  const [identifier, setIdentifier] = useState('admin@dealership.com');
   const [password, setPassword] = useState('password123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,30 +22,23 @@ export const LoginPage: React.FC = () => {
       await login(identifier, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (role: 'ADMIN' | 'MANAGER' | 'SALES' | 'FIELD') => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await quickLoginAs(role);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Invalid email/mobile or password');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white flex items-center justify-center font-bold text-base shadow-md ring-2 ring-brand-500/20">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden select-none">
+      {/* Background ambient lighting effects */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25 pointer-events-none" />
+
+      {/* Brand Header */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
+        <div className="inline-flex items-center justify-center p-1.5 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 shadow-xl shadow-brand-500/20 ring-1 ring-white/20 mb-4 group transition-transform hover:scale-105 duration-300">
+          <div className="w-12 h-12 rounded-xl bg-slate-950/40 backdrop-blur flex items-center justify-center">
             <svg className="w-6 h-6 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
               <circle cx="7" cy="17" r="2" />
@@ -55,106 +48,102 @@ export const LoginPage: React.FC = () => {
             </svg>
           </div>
         </div>
-        <h2 className="mt-3 text-center text-xl font-bold tracking-tight text-slate-900">
-          Drive<span className="text-brand-600">Pulse</span> Enterprise
-        </h2>
-        <p className="text-center text-xs text-slate-500 mt-0.5">
+
+        <h1 className="font-display font-extrabold text-2xl tracking-tight text-white flex items-center justify-center gap-1.5">
+          Drive<span className="text-brand-500">Pulse</span>
+          <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-brand-950/80 border border-brand-500/40 text-brand-400">
+            OS
+          </span>
+        </h1>
+        <p className="text-xs text-slate-400 font-medium mt-1 tracking-wide">
           Automotive Sales Cloud & Dealership Intelligence
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white border border-slate-200 py-6 px-6 sm:px-8 shadow-subtle rounded-lg">
+      {/* Main Login Card */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] relative z-10">
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 py-8 px-6 sm:px-9 shadow-2xl rounded-2xl ring-1 ring-white/5">
+          <div className="mb-6">
+            <h2 className="text-base font-bold text-slate-100">Sign in to your account</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Enter your dealership credentials to continue</p>
+          </div>
+
           {error && (
-            <div className="mb-4 p-3 rounded-md bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+            <div className="mb-5 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <Input
-              label="Email or Mobile Number"
-              type="text"
-              required
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="e.g. sales1@autolms.com or 9800000003"
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Email or Mobile Number
+              </label>
+              <div className="relative rounded-lg shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="admin@dealership.com or mobile"
+                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                />
+              </div>
+            </div>
 
-            <Input
-              label="Password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Password
+                </label>
+              </div>
+              <div className="relative rounded-lg shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-9 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
 
-            <div className="pt-1">
-              <Button type="submit" isLoading={isLoading} className="w-full" size="md" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                isLoading={isLoading}
+                className="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 shadow-lg shadow-brand-600/25 transition-all duration-200"
+                size="md"
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
                 Sign In
               </Button>
             </div>
           </form>
 
-          {/* Quick Demo Persona Switcher */}
-          <div className="mt-6 pt-5 border-t border-slate-200">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-center mb-2.5">
-              1-Click Demo Login Profiles
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('ADMIN')}
-                className="flex items-center gap-2 p-2 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors text-xs text-slate-800 font-medium"
-              >
-                <Shield className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <div>
-                  <span className="block font-semibold">Admin</span>
-                  <span className="text-[10px] text-slate-500">System Admin</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('MANAGER')}
-                className="flex items-center gap-2 p-2 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors text-xs text-slate-800 font-medium"
-              >
-                <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <div>
-                  <span className="block font-semibold">Manager</span>
-                  <span className="text-[10px] text-slate-500">Sales Manager</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('SALES')}
-                className="flex items-center gap-2 p-2 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors text-xs text-slate-800 font-medium"
-              >
-                <User className="w-3.5 h-3.5 text-brand-600 shrink-0" />
-                <div>
-                  <span className="block font-semibold">Sales Exec</span>
-                  <span className="text-[10px] text-slate-500">Amit Kumar</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('FIELD')}
-                className="flex items-center gap-2 p-2 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors text-xs text-slate-800 font-medium"
-              >
-                <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <div>
-                  <span className="block font-semibold">Field Agent</span>
-                  <span className="text-[10px] text-slate-500">Commercial Fleets</span>
-                </div>
-              </button>
-            </div>
+          {/* Security & Authentication Guarantee Footer */}
+          <div className="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-brand-400" />
+            <span>End-to-end encrypted · Dealership Multi-tenant Security</span>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
