@@ -47,6 +47,7 @@ export class CommunicationService {
     requirementIds: string[];
     customNote?: string | null;
     preparedById: string;
+    userRole?: string;
   }) {
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: data.vehicleId },
@@ -63,6 +64,7 @@ export class CommunicationService {
       },
       include: {
         customer: true,
+        assignedTo: { select: { id: true, fullName: true } },
       },
     });
 
@@ -90,6 +92,19 @@ export class CommunicationService {
 
     if (!effectivePreparedById) {
       throw { status: 400, message: 'No staff user account found to attribute outreach to. Please re-login with a valid account.' };
+    }
+
+    // RBAC: Non-manager staff (Sales / Field executives) cannot outreach to leads assigned to other staff
+    const isManagerOrAdmin = data.userRole === 'ADMIN' || data.userRole === 'MANAGER';
+    if (!isManagerOrAdmin) {
+      for (const req of requirements) {
+        if (req.assignedToId && req.assignedToId !== effectivePreparedById) {
+          throw {
+            status: 403,
+            message: `Lead ownership restriction: The requirement for ${req.customer?.fullName} is assigned to ${req.assignedTo?.fullName || 'another sales executive'}. Peer sales executives cannot outreach to colleagues' assigned leads.`,
+          };
+        }
+      }
     }
 
     for (const req of requirements) {

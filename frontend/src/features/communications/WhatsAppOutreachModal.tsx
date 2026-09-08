@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import { Vehicle, CustomerRequirement } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 interface WhatsAppOutreachModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const WhatsAppOutreachModal: React.FC<WhatsAppOutreachModalProps> = ({
   requirements,
   onOutreachCompleted,
 }) => {
+  const { user, isManager } = useAuth();
   const [customNote, setCustomNote] = useState('');
   const [isPreparing, setIsPreparing] = useState(false);
   const [preparedResult, setPreparedResult] = useState<any | null>(null);
@@ -27,13 +29,32 @@ export const WhatsAppOutreachModal: React.FC<WhatsAppOutreachModalProps> = ({
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // Enforce Lead Ownership: non-managers can only outreach to unassigned leads or their own leads
+  const allowedRequirements = React.useMemo(() => {
+    if (isManager) return requirements;
+    return requirements.filter(
+      (r) => !r.assignedToId || (user?.id && r.assignedToId === user.id)
+    );
+  }, [requirements, isManager, user?.id]);
+
+  const blockedRequirements = React.useMemo(() => {
+    if (isManager) return [];
+    return requirements.filter(
+      (r) => r.assignedToId && (!user?.id || r.assignedToId !== user.id)
+    );
+  }, [requirements, isManager, user?.id]);
+
   const handlePrepare = async () => {
+    if (allowedRequirements.length === 0) {
+      setServerError('None of the selected leads are assigned to you. Only the assigned executive or a manager can send outreach.');
+      return;
+    }
     setServerError(null);
     setIsPreparing(true);
     try {
       const res: any = await api.post('/communications/prepare', {
         vehicleId: vehicle.id,
-        requirementIds: requirements.map((r) => r.id),
+        requirementIds: allowedRequirements.map((r) => r.id),
         customNote: customNote || undefined,
       });
       if (res.success && res.data) {
@@ -91,13 +112,27 @@ export const WhatsAppOutreachModal: React.FC<WhatsAppOutreachModalProps> = ({
           <div>
             <span className="text-slate-500">Target Recipients: </span>
             <span className="font-semibold text-slate-900">
-              {requirements.length} Customer{requirements.length > 1 ? 's' : ''} Selected
+              {allowedRequirements.length} Customer{allowedRequirements.length > 1 ? 's' : ''} Ready
+              {blockedRequirements.length > 0 && ` (${blockedRequirements.length} Protected / Excluded)`}
             </span>
           </div>
           <span className="font-mono text-slate-900 font-semibold">
             Vehicle Price: ₹{(vehicle.price / 100000).toFixed(2)} Lakh
           </span>
         </div>
+
+        {/* Lead Ownership Notice */}
+        {blockedRequirements.length > 0 && (
+          <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
+            <span className="text-sm">🔒</span>
+            <div>
+              <strong className="text-amber-900">Lead Ownership Protection: </strong>
+              <span>
+                {blockedRequirements.length} customer enquiry{blockedRequirements.length > 1 ? ' is' : ''} assigned to other sales executives ({blockedRequirements.map(b => b.assignedTo?.fullName || 'Colleague').filter((v, i, a) => a.indexOf(v) === i).join(', ')}). Peer sales staff cannot cross-outreach to colleagues' assigned leads.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Custom Note input before preparing */}
         {!preparedResult && (
@@ -131,9 +166,10 @@ export const WhatsAppOutreachModal: React.FC<WhatsAppOutreachModalProps> = ({
                 size="sm"
                 onClick={handlePrepare}
                 isLoading={isPreparing}
+                disabled={allowedRequirements.length === 0}
                 leftIcon={<Sparkles className="w-3.5 h-3.5" />}
               >
-                Generate WhatsApp Messages
+                {allowedRequirements.length === 0 ? 'No Eligible Leads' : 'Generate WhatsApp Messages'}
               </Button>
             </div>
           </div>

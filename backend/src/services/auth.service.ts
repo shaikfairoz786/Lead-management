@@ -8,7 +8,7 @@ import { logAudit } from '../middleware/audit';
 export class AuthService {
   static async login(identifier: string, passwordPlain: string) {
     const normalizedMobile = normalizeMobile(identifier);
-    
+
     const user = await prisma.user.findFirst({
       where: {
         OR: [

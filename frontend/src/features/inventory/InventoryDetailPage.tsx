@@ -44,7 +44,7 @@ export const InventoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isManager } = useAuth();
+  const { user, isManager } = useAuth();
 
   const tabParam = searchParams.get('tab');
   const justAdded = searchParams.get('justAdded') === 'true';
@@ -452,6 +452,7 @@ export const InventoryDetailPage: React.FC = () => {
                   const isSelected = selectedReqIds.includes(m.requirementId);
                   const reasons = m.matchReasons ? JSON.parse(m.matchReasons) : [];
 
+                const canContact = isManager || !req.assignedToId || (user?.id && req.assignedToId === user.id);
                 return (
                   <div
                     key={m.id}
@@ -463,17 +464,26 @@ export const InventoryDetailPage: React.FC = () => {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-start gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => toggleSelectReq(m.requirementId)}
-                          className="mt-0.5 text-slate-400 hover:text-brand-600"
-                        >
-                          {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-brand-600" />
-                          ) : (
-                            <Square className="w-4 h-4" />
-                          )}
-                        </button>
+                        {canContact ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleSelectReq(m.requirementId)}
+                            className="mt-0.5 text-slate-400 hover:text-brand-600"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-brand-600" />
+                            ) : (
+                              <Square className="w-4 h-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <span
+                            className="mt-0.5 text-xs text-slate-400 cursor-not-allowed"
+                            title={`Assigned to ${req.assignedTo?.fullName || 'another executive'}. Outreach restricted.`}
+                          >
+                            🔒
+                          </span>
+                        )}
 
                         <div>
                           <div className="flex items-center gap-2">
@@ -495,7 +505,7 @@ export const InventoryDetailPage: React.FC = () => {
                             </span>
                             <span>· Req: {req.brand || ''} {req.model || 'Lead'}</span>
                             <span>· Budget: <strong className="text-slate-900 font-mono">{formatBudgetRange(req.minBudget, req.maxBudget)}</strong></span>
-                            <span>· Owner: {req.assignedTo?.fullName || 'Unassigned'}</span>
+                            <span>· Owner: <strong className="text-slate-800">{req.assignedTo?.fullName || 'Unassigned'}</strong></span>
                           </div>
                         </div>
                       </div>
@@ -508,17 +518,26 @@ export const InventoryDetailPage: React.FC = () => {
                         >
                           View Lead
                         </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedReqIds([req.id]);
-                            setIsWhatsAppModalOpen(true);
-                          }}
-                          leftIcon={<Send className="w-3 h-3" />}
-                        >
-                          WhatsApp
-                        </Button>
+                        {canContact ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReqIds([req.id]);
+                              setIsWhatsAppModalOpen(true);
+                            }}
+                            leftIcon={<Send className="w-3 h-3" />}
+                          >
+                            WhatsApp
+                          </Button>
+                        ) : (
+                          <span
+                            className="text-[11px] text-slate-400 bg-slate-100 px-2.5 py-1.5 rounded border border-slate-200 cursor-not-allowed flex items-center gap-1 font-medium"
+                            title={`Assigned to ${req.assignedTo?.fullName || 'another executive'}. WhatsApp outreach restricted to owner.`}
+                          >
+                            🔒 Assigned to {req.assignedTo?.fullName?.split(' ')[0] || 'Peer'}
+                          </span>
+                        )}
                       </div>
                     </div>
 

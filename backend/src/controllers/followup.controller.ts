@@ -21,9 +21,19 @@ export class FollowUpController {
   static async listFollowUps(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { tab, assignedToId, status, page, limit } = req.query;
+      const isManagerOrAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'MANAGER';
+      
+      // Non-managers strictly view their own assigned follow-ups
+      let effectiveAssignedToId: string | undefined = undefined;
+      if (!isManagerOrAdmin) {
+        effectiveAssignedToId = req.user?.userId;
+      } else if (assignedToId && assignedToId !== 'all') {
+        effectiveAssignedToId = assignedToId as string;
+      }
+
       const result = await FollowUpService.listFollowUps({
         tab: tab as any,
-        assignedToId: assignedToId as string,
+        assignedToId: effectiveAssignedToId,
         status: status as string,
         page: page ? Number(page) : 1,
         limit: limit ? Number(limit) : 20,

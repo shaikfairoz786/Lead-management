@@ -269,13 +269,23 @@ export const RequirementDetailPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           {requirement.customer?.primaryMobile && (
-            <a
-              href={`tel:${requirement.customer.primaryMobile}`}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium shadow-subtle"
-            >
-              <Phone className="w-3.5 h-3.5 text-slate-500" />
-              <span>Call</span>
-            </a>
+            canEditLead ? (
+              <a
+                href={`tel:${requirement.customer.primaryMobile}`}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium shadow-subtle"
+              >
+                <Phone className="w-3.5 h-3.5 text-slate-500" />
+                <span>Call</span>
+              </a>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-200 text-slate-400 bg-slate-100 text-xs font-medium cursor-not-allowed"
+                title={`Lead assigned to ${requirement.assignedTo?.fullName || 'another executive'}. Call action restricted to owner.`}
+              >
+                <Phone className="w-3.5 h-3.5 text-slate-400" />
+                <span>🔒 Call Restricted</span>
+              </span>
+            )
           )}
 
           {canEditLead && (
@@ -592,14 +602,23 @@ export const RequirementDetailPage: React.FC = () => {
                         Vehicle Details →
                       </button>
 
-                      <Button
-                        onClick={() => setSelectedVehicleForWhatsApp(m.vehicle)}
-                        variant="primary"
-                        size="sm"
-                        leftIcon={<Send className="w-3 h-3" />}
-                      >
-                        Prepare WhatsApp
-                      </Button>
+                      {canEditLead ? (
+                        <Button
+                          onClick={() => setSelectedVehicleForWhatsApp(m.vehicle)}
+                          variant="primary"
+                          size="sm"
+                          leftIcon={<Send className="w-3 h-3" />}
+                        >
+                          Prepare WhatsApp
+                        </Button>
+                      ) : (
+                        <span
+                          className="text-[11px] text-slate-400 bg-slate-100 px-2.5 py-1.5 rounded border border-slate-200 cursor-not-allowed flex items-center gap-1 font-medium"
+                          title={`Assigned to ${requirement.assignedTo?.fullName || 'another executive'}. WhatsApp outreach restricted to owner.`}
+                        >
+                          🔒 Owner Outreach Only
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

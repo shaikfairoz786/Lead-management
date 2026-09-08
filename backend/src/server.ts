@@ -14,7 +14,7 @@ server.headersTimeout = 66000;
 
 const gracefulShutdown = async (signal: string) => {
   logger.info(`${signal} signal received. Initiating graceful shutdown...`);
-  
+
   server.close(async () => {
     logger.info('HTTP server closed.');
     try {

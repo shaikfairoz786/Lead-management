@@ -31,6 +31,21 @@ export const FollowUpQueuePage: React.FC = () => {
 
   const activeTab = (searchParams.get('tab') as any) || 'TODAY';
   const [page, setPage] = useState(1);
+  const [staffFilter, setStaffFilter] = useState<string>(isManager ? 'ALL' : 'MY');
+
+  // Fetch staff users for Manager/Admin oversight
+  const { data: staffList = [] } = useQuery({
+    queryKey: ['staffUsers'],
+    queryFn: async () => {
+      const res: any = await api.get('/auth/users');
+      return res.data || [];
+    },
+    enabled: isManager,
+  });
+
+  const effectiveAssignedToId = isManager
+    ? (staffFilter === 'MY' ? user?.id : (staffFilter === 'ALL' ? undefined : staffFilter))
+    : user?.id;
 
   // Complete Follow-up Modal State
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(null);
@@ -42,12 +57,15 @@ export const FollowUpQueuePage: React.FC = () => {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['followups', activeTab, page],
+    queryKey: ['followups', activeTab, page, effectiveAssignedToId],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('tab', activeTab);
       params.set('page', String(page));
       params.set('limit', '25');
+      if (effectiveAssignedToId) {
+        params.set('assignedToId', effectiveAssignedToId);
+      }
       const res: any = await api.get(`/followups?${params.toString()}`);
       return res.data;
     },
@@ -91,13 +109,63 @@ export const FollowUpQueuePage: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="pb-3 border-b border-slate-200">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-          Follow-up Queue
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Track overdue tasks, today's call schedule, and upcoming sales touchpoints.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Follow-up Queue
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Track overdue tasks, today's call schedule, and upcoming sales touchpoints.
+          </p>
+        </div>
+
+        {isManager ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => { setStaffFilter('ALL'); setPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  staffFilter === 'ALL' ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All Team
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStaffFilter('MY'); setPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  staffFilter === 'MY' ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                My Tasks
+              </button>
+            </div>
+
+            <select
+              value={staffFilter === 'ALL' || staffFilter === 'MY' ? '' : staffFilter}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setStaffFilter(e.target.value);
+                  setPage(1);
+                }
+              }}
+              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">Specific Staff Member...</option>
+              {staffList.map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.fullName} ({s.role})
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-brand-700">
+            <User className="w-3.5 h-3.5 text-brand-600" />
+            <span>My Personal Schedule ({user?.fullName})</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs with Badge Counters */}

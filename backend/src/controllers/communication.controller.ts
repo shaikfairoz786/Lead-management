@@ -14,6 +14,7 @@ export class CommunicationController {
       const result = await CommunicationService.prepareOutreach({
         ...validated,
         preparedById: req.user!.userId,
+        userRole: req.user?.role,
       });
       return sendSuccess(res, result, 'Outreach prepared successfully', 201);
     } catch (error) {

@@ -23,14 +23,19 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/common/Badge';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { formatBudgetRange, formatRelativeTime } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 export const RequirementListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isManager } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '');
+  const [ownershipScope, setOwnershipScope] = useState<'MY_LEADS' | 'ALL_LEADS'>(
+    isManager ? 'ALL_LEADS' : 'MY_LEADS'
+  );
   const [viewMode, setViewMode] = useState<'TABLE' | 'BOARD'>('TABLE');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(25);
@@ -40,12 +45,15 @@ export const RequirementListPage: React.FC = () => {
   const effectiveLimit = viewMode === 'BOARD' ? 500 : pageSize;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['requirements', searchTerm, statusFilter, categoryFilter, page, effectiveLimit, viewMode],
+    queryKey: ['requirements', searchTerm, statusFilter, categoryFilter, ownershipScope, page, effectiveLimit, viewMode, user?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm.trim()) params.set('search', searchTerm.trim());
       if (statusFilter) params.set('status', statusFilter);
       if (categoryFilter) params.set('category', categoryFilter);
+      if (ownershipScope === 'MY_LEADS' && user?.id) {
+        params.set('assignedToId', user.id);
+      }
       params.set('page', String(viewMode === 'BOARD' ? 1 : page));
       params.set('limit', String(effectiveLimit));
       const res: any = await api.get(`/requirements?${params.toString()}`);
@@ -53,7 +61,21 @@ export const RequirementListPage: React.FC = () => {
     },
   });
 
-  const requirements: CustomerRequirement[] = data?.data || [];
+  const rawRequirements: CustomerRequirement[] = data?.data || [];
+  
+  // Prioritize logged-in user's assigned leads at the very top of the list
+  const requirements = React.useMemo(() => {
+    if (!user?.id) return rawRequirements;
+    return [...rawRequirements].sort((a, b) => {
+      const aMine = a.assignedToId === user.id ? 1 : 0;
+      const bMine = b.assignedToId === user.id ? 1 : 0;
+      if (aMine !== bMine) {
+        return bMine - aMine; // User's assigned leads first
+      }
+      return 0;
+    });
+  }, [rawRequirements, user?.id]);
+
   const meta = data?.meta || { total: 0, page: 1, totalPages: 1, limit: effectiveLimit };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -104,7 +126,27 @@ export const RequirementListPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Ownership Toggle: My Leads vs All Leads */}
+          <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold">
+            <button
+              onClick={() => { setOwnershipScope('MY_LEADS'); setPage(1); }}
+              className={`px-3 py-1 rounded-md transition-all ${
+                ownershipScope === 'MY_LEADS' ? 'bg-white text-brand-700 font-bold shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              My Leads
+            </button>
+            <button
+              onClick={() => { setOwnershipScope('ALL_LEADS'); setPage(1); }}
+              className={`px-3 py-1 rounded-md transition-all ${
+                ownershipScope === 'ALL_LEADS' ? 'bg-white text-slate-900 font-bold shadow-subtle' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All Leads
+            </button>
+          </div>
+
           {/* Table / Kanban Toggle */}
           <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold">
             <button
@@ -232,8 +274,15 @@ export const RequirementListPage: React.FC = () => {
                     className="table-row cursor-pointer group"
                   >
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
-                        {req.brand || ''} {req.model || 'Requirement'} {req.variant || ''}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
+                          {req.brand || ''} {req.model || 'Requirement'} {req.variant || ''}
+                        </span>
+                        {user?.id && req.assignedToId === user.id && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Assigned to You
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
                         <span className="font-medium text-slate-700">
@@ -378,8 +427,15 @@ export const RequirementListPage: React.FC = () => {
                         className="p-3 bg-white rounded-xl border border-slate-200/90 hover:border-slate-300 hover:shadow-card cursor-pointer shadow-subtle text-xs transition-all space-y-2 group"
                       >
                         <div className="flex items-start justify-between gap-1.5">
-                          <div className="font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
-                            {req.brand || ''} {req.model || 'Lead'}
+                          <div>
+                            <div className="font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                              {req.brand || ''} {req.model || 'Lead'}
+                            </div>
+                            {user?.id && req.assignedToId === user.id && (
+                              <span className="inline-block mt-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Assigned to You
+                              </span>
+                            )}
                           </div>
                           {req.priority && (
                             <PriorityBadge priority={req.priority} />
