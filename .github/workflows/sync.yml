@@ -1,0 +1,20 @@
+name: Sync to drivepulse
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to drivepulse
+        run: |
+          git remote add target https://${{ secrets.SYNC_TOKEN }}@github.com/shaikfairoz786/drivepulse.git
+          git push target main --force
